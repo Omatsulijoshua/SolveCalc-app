@@ -12,19 +12,29 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { canAccess, role } = useAuth();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [desktopCollapsed, setDesktopCollapsed] = useState(false);
 
   const isAllowed = canAccess(pathname);
 
   return (
     <div className="flex min-h-screen bg-background text-foreground">
-      {/* Collapsible Navigation Sidebar */}
-      <Sidebar />
+      {/* Collapsible & Mobile Drawer Navigation Sidebar */}
+      <Sidebar
+        mobileOpen={mobileSidebarOpen}
+        onMobileClose={() => setMobileSidebarOpen(false)}
+        collapsed={desktopCollapsed}
+        onToggleCollapse={() => setDesktopCollapsed(!desktopCollapsed)}
+      />
 
       {/* Main Content Viewport */}
       <div className="flex-1 flex flex-col min-w-0">
-        <TopBar onOpenSearch={() => setIsSearchOpen(true)} />
+        <TopBar
+          onOpenSearch={() => setIsSearchOpen(true)}
+          onToggleMobileSidebar={() => setMobileSidebarOpen(!mobileSidebarOpen)}
+        />
 
-        <main className="flex-1 p-6 md:p-8 overflow-y-auto max-w-7xl w-full mx-auto">
+        <main className="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto max-w-7xl w-full mx-auto">
           {isAllowed ? (
             children
           ) : (
