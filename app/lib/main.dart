@@ -12,9 +12,13 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final storageService = await StorageService.init();
 
+  // DevicePreview is ONLY enabled for Flutter Web in development (flutter run -d chrome),
+  // and is completely disabled for Android/iOS APK, AAB, and native mobile builds.
+  const isDevicePreviewActive = kIsWeb && !kReleaseMode;
+
   runApp(
     DevicePreview(
-      enabled: !kReleaseMode,
+      enabled: isDevicePreviewActive,
       builder: (context) => ProviderScope(
         overrides: [
           storageServiceProvider.overrideWithValue(storageService),
@@ -38,11 +42,13 @@ class SolveCalcApp extends ConsumerWidget {
     final baseTheme = themeController.materialThemeData;
     final textTheme = GoogleFonts.interTextTheme(baseTheme.textTheme);
 
+    const isDevicePreviewActive = kIsWeb && !kReleaseMode;
+
     return MaterialApp(
       title: 'SolveCalc',
       debugShowCheckedModeBanner: false,
-      locale: DevicePreview.locale(context),
-      builder: DevicePreview.appBuilder,
+      locale: isDevicePreviewActive ? DevicePreview.locale(context) : null,
+      builder: isDevicePreviewActive ? DevicePreview.appBuilder : null,
       theme: baseTheme.copyWith(textTheme: textTheme),
       home: isOnboardingComplete ? const AppShell() : const OnboardingScreen(),
     );
