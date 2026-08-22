@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/theme/theme_controller.dart';
+import '../../domain/ads/ad_manager.dart';
 import '../../features/premium/premium_paywall_screen.dart';
 import '../providers/premium_provider.dart';
 
@@ -11,11 +12,18 @@ class AppOpenAdDialog extends ConsumerStatefulWidget {
 
   static Future<void> showIfEligible(BuildContext context, WidgetRef ref) async {
     final isPro = ref.read(premiumProvider).isPremium;
-    if (isPro) return;
+    AdManager.instance.updatePremiumStatus(isPro);
 
-    // Small delay to ensure widget tree is mounted
-    await Future.delayed(const Duration(milliseconds: 300));
+    // Enforce multi-network AdManager eligibility & frequency caps
+    if (!AdManager.instance.canShowAppOpenAd()) {
+      return;
+    }
+
+    // Small timeout safe delay to ensure tree is mounted
+    await Future.delayed(const Duration(milliseconds: 250));
     if (!context.mounted) return;
+
+    AdManager.instance.recordAppOpenShown();
 
     await showDialog(
       context: context,

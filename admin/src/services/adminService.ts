@@ -13,6 +13,11 @@ import {
   FeatureFlag,
   SystemHealthItem,
   AIProviderConfig,
+  PremiumPurchase,
+  AdNetworkItem,
+  HouseAdCampaign,
+  RemoteConfigVersion,
+  MonetizationAlert,
 } from "../types";
 import {
   INITIAL_ADMINS,
@@ -27,9 +32,13 @@ import {
   INITIAL_AI_PROVIDERS,
   INITIAL_FEATURE_FLAGS,
   INITIAL_SYSTEM_HEALTH,
+  INITIAL_PREMIUM_PURCHASES,
+  INITIAL_AD_NETWORKS,
+  INITIAL_HOUSE_ADS,
+  INITIAL_CONFIG_VERSIONS,
+  INITIAL_MONETIZATION_ALERTS,
 } from "./mockDataStore";
 
-// In-memory state store with localStorage persistence where available
 class AdminDataService {
   private admins: AdminUser[] = [...INITIAL_ADMINS];
   private users: User[] = [...INITIAL_USERS];
@@ -45,15 +54,19 @@ class AdminDataService {
   private systemHealth: SystemHealthItem[] = [...INITIAL_SYSTEM_HEALTH];
   private currentAdmin: AdminUser = INITIAL_ADMINS[0];
 
+  // Monetization Data
+  private purchases: PremiumPurchase[] = [...INITIAL_PREMIUM_PURCHASES];
+  private adNetworks: AdNetworkItem[] = [...INITIAL_AD_NETWORKS];
+  private houseAds: HouseAdCampaign[] = [...INITIAL_HOUSE_ADS];
+  private configVersions: RemoteConfigVersion[] = [...INITIAL_CONFIG_VERSIONS];
+  private alerts: MonetizationAlert[] = [...INITIAL_MONETIZATION_ALERTS];
+
   // AUTH METHODS
   async login(email: string, password: string): Promise<AdminUser> {
-    await new Promise((r) => setTimeout(r, 400));
+    await new Promise((r) => setTimeout(r, 300));
     const admin = this.admins.find((a) => a.email.toLowerCase() === email.toLowerCase());
     if (!admin) {
       throw new Error("Invalid administrator credentials.");
-    }
-    if (admin.status === "SUSPENDED") {
-      throw new Error("Administrator account is suspended. Contact Super Admin.");
     }
     this.currentAdmin = admin;
     this.logAction("ADMIN_LOGIN", "AdminUser", admin.id, `Admin ${admin.name} logged in.`);
@@ -99,7 +112,7 @@ class AdminDataService {
   }
 
   async getAuditLogs(search?: string, actionFilter?: string): Promise<AuditLog[]> {
-    await new Promise((r) => setTimeout(r, 200));
+    await new Promise((r) => setTimeout(r, 150));
     return this.auditLogs.filter((log) => {
       if (actionFilter && actionFilter !== "ALL" && log.action !== actionFilter) return false;
       if (search) {
@@ -122,7 +135,7 @@ class AdminDataService {
     page?: number;
     limit?: number;
   }): Promise<{ users: User[]; total: number }> {
-    await new Promise((r) => setTimeout(r, 250));
+    await new Promise((r) => setTimeout(r, 200));
     let filtered = [...this.users];
     if (params?.search) {
       const q = params.search.toLowerCase();
@@ -145,10 +158,6 @@ class AdminDataService {
     };
   }
 
-  async getUserById(id: string): Promise<User | undefined> {
-    return this.users.find((u) => u.id === id);
-  }
-
   async updateUserStatus(id: string, status: AccountStatus, reason?: string): Promise<User> {
     const user = this.users.find((u) => u.id === id);
     if (!user) throw new Error("User not found.");
@@ -157,22 +166,106 @@ class AdminDataService {
       `USER_STATUS_${status}`,
       "User",
       id,
-      `Changed status of ${user.name} (${user.email}) to ${status}. Reason: ${reason || "Admin update"}`
+      `Changed status of ${user.name} to ${status}. Reason: ${reason || "Admin update"}`
     );
     return user;
   }
 
-  async deleteUser(id: string): Promise<boolean> {
-    const user = this.users.find((u) => u.id === id);
-    if (!user) return false;
-    user.status = "DELETED";
-    this.logAction("DELETE_USER", "User", id, `Soft deleted user ${user.name} (${user.email}).`);
-    return true;
+  // MONETIZATION & IN-APP PURCHASES
+  async getPremiumPurchases(): Promise<PremiumPurchase[]> {
+    await new Promise((r) => setTimeout(r, 150));
+    return this.purchases;
+  }
+
+  async getAdNetworks(): Promise<AdNetworkItem[]> {
+    await new Promise((r) => setTimeout(r, 150));
+    return this.adNetworks.sort((a, b) => a.priority - b.priority);
+  }
+
+  async toggleAdNetwork(id: string): Promise<AdNetworkItem> {
+    const net = this.adNetworks.find((n) => n.id === id);
+    if (!net) throw new Error("Network not found.");
+    net.isEnabled = !net.isEnabled;
+    this.logAction("TOGGLE_AD_NETWORK", "AdNetworkItem", id, `Set ${net.name} enabled=${net.isEnabled}.`);
+    return net;
+  }
+
+  async getHouseAds(): Promise<HouseAdCampaign[]> {
+    return this.houseAds;
+  }
+
+  async createHouseAd(ad: Omit<HouseAdCampaign, "id" | "impressions" | "clicks" | "ctrPercent" | "createdAt">): Promise<HouseAdCampaign> {
+    const created: HouseAdCampaign = {
+      ...ad,
+      id: `house-${Date.now()}`,
+      impressions: 0,
+      clicks: 0,
+      ctrPercent: 0,
+      createdAt: new Date().toISOString(),
+    };
+    this.houseAds.push(created);
+    this.logAction("CREATE_HOUSE_AD", "HouseAdCampaign", created.id, `Created house campaign "${created.title}".`);
+    return created;
+  }
+
+  async getRemoteConfigVersions(): Promise<RemoteConfigVersion[]> {
+    return this.configVersions;
+  }
+
+  async publishRemoteConfig(config: Omit<RemoteConfigVersion, "version" | "publishedAt" | "publishedBy" | "isActive">): Promise<RemoteConfigVersion> {
+    const newVer = `v${this.configVersions.length + 41}`;
+    this.configVersions.forEach((c) => (c.isActive = false));
+    const published: RemoteConfigVersion = {
+      ...config,
+      version: `${newVer} (Current)`,
+      publishedBy: this.currentAdmin.name,
+      publishedAt: new Date().toISOString(),
+      isActive: true,
+    };
+    this.configVersions.unshift(published);
+    this.logAction("PUBLISH_REMOTE_CONFIG", "RemoteConfigVersion", newVer, `Published remote config ${newVer}: ${config.changeSummary}`);
+    return published;
+  }
+
+  async rollbackRemoteConfig(versionStr: string): Promise<void> {
+    this.configVersions.forEach((c) => (c.isActive = c.version.includes(versionStr)));
+    this.logAction("ROLLBACK_REMOTE_CONFIG", "RemoteConfigVersion", versionStr, `Rolled back to remote config ${versionStr}.`);
+  }
+
+  async getMonetizationAlerts(): Promise<MonetizationAlert[]> {
+    return this.alerts;
+  }
+
+  // MONETIZATION KPI ANALYTICS
+  getMonetizationOverviewKPIs() {
+    return {
+      totalRevenueUsd: 19840.5,
+      totalRevenueChange: "+24.8%",
+      premiumRevenueUsd: 18200.0,
+      premiumPurchasesCount: 1820,
+      adRevenueTodayUsd: 96.62,
+      adRevenueMonthUsd: 1640.5,
+      overallFillRatePercent: 96.4,
+      avgEcpmUsd: 4.62,
+      arpuUsd: 1.34,
+      freeToPremiumConversionPercent: 12.2,
+    };
+  }
+
+  getRevenueComparisonChartData() {
+    return [
+      { date: "May 1", premiumUsd: 420, adsUsd: 48.2, totalUsd: 468.2 },
+      { date: "May 5", premiumUsd: 580, adsUsd: 62.5, totalUsd: 642.5 },
+      { date: "May 10", premiumUsd: 710, adsUsd: 74.0, totalUsd: 784.0 },
+      { date: "May 15", premiumUsd: 890, adsUsd: 88.5, totalUsd: 978.5 },
+      { date: "May 20", premiumUsd: 980, adsUsd: 94.2, totalUsd: 1074.2 },
+      { date: "May 22", premiumUsd: 1120, adsUsd: 96.6, totalUsd: 1216.6 },
+    ];
   }
 
   // CALCULATOR
   async getCalculations(search?: string, mode?: string): Promise<Calculation[]> {
-    await new Promise((r) => setTimeout(r, 200));
+    await new Promise((r) => setTimeout(r, 150));
     return this.calculations.filter((c) => {
       if (mode && mode !== "ALL" && c.mode !== mode) return false;
       if (search) {
@@ -191,38 +284,19 @@ class AdminDataService {
       { name: "Sine / Trig (sin, cos)", count: 1890, percentage: 12 },
       { name: "Square Root (√)", count: 1420, percentage: 9 },
       { name: "Logarithms (log, ln)", count: 850, percentage: 6 },
-      { name: "Powers (x², xʸ)", count: 720, percentage: 5 },
-      { name: "Factorials (x!)", count: 340, percentage: 2 },
     ];
   }
 
   // AI SOLUTIONS
-  async getAISolutions(search?: string, status?: string): Promise<AISolution[]> {
-    await new Promise((r) => setTimeout(r, 250));
-    return this.aiSolutions.filter((s) => {
-      if (status && status !== "ALL" && s.status !== status) return false;
-      if (search) {
-        const q = search.toLowerCase();
-        return (
-          s.question.toLowerCase().includes(q) ||
-          s.finalAnswer.toLowerCase().includes(q) ||
-          s.userName.toLowerCase().includes(q)
-        );
-      }
-      return true;
-    });
+  async getAISolutions(search?: string): Promise<AISolution[]> {
+    return this.aiSolutions.filter((s) => !search || s.question.toLowerCase().includes(search.toLowerCase()));
   }
 
   async getSolutionReports(): Promise<SolutionReport[]> {
-    await new Promise((r) => setTimeout(r, 200));
     return this.reports;
   }
 
-  async updateReportStatus(
-    id: string,
-    status: "PENDING" | "INVESTIGATING" | "RESOLVED" | "DISMISSED",
-    notes?: string
-  ): Promise<SolutionReport> {
+  async updateReportStatus(id: string, status: "PENDING" | "INVESTIGATING" | "RESOLVED" | "DISMISSED", notes?: string): Promise<SolutionReport> {
     const report = this.reports.find((r) => r.id === id);
     if (!report) throw new Error("Report not found.");
     report.status = status;
@@ -232,24 +306,12 @@ class AdminDataService {
 
   // SCANNER
   async getScans(status?: string): Promise<ScanRecord[]> {
-    await new Promise((r) => setTimeout(r, 200));
     return this.scans.filter((s) => !status || status === "ALL" || s.status === status);
   }
 
   // THEMES
   async getThemes(): Promise<ThemeItem[]> {
     return this.themes;
-  }
-
-  async createTheme(theme: Omit<ThemeItem, "id" | "order">): Promise<ThemeItem> {
-    const newTheme: ThemeItem = {
-      ...theme,
-      id: `theme-${Date.now()}`,
-      order: this.themes.length + 1,
-    };
-    this.themes.push(newTheme);
-    this.logAction("CREATE_THEME", "ThemeItem", newTheme.id, `Created theme "${newTheme.name}".`);
-    return newTheme;
   }
 
   async toggleThemeActive(id: string): Promise<ThemeItem> {
@@ -273,9 +335,7 @@ class AdminDataService {
     return this.notifications;
   }
 
-  async sendNotification(
-    data: Omit<NotificationItem, "id" | "deliveredCount" | "openedCount" | "sentAt" | "status">
-  ): Promise<NotificationItem> {
+  async sendNotification(data: Omit<NotificationItem, "id" | "deliveredCount" | "openedCount" | "sentAt" | "status">): Promise<NotificationItem> {
     const notif: NotificationItem = {
       ...data,
       id: `notif-${Date.now()}`,
@@ -289,17 +349,9 @@ class AdminDataService {
     return notif;
   }
 
-  // AI PROVIDERS & COSTS
+  // AI PROVIDERS & FEATURE FLAGS
   async getAIProviders(): Promise<AIProviderConfig[]> {
     return this.aiProviders;
-  }
-
-  async updateAIProvider(id: string, updates: Partial<AIProviderConfig>): Promise<AIProviderConfig> {
-    const provider = this.aiProviders.find((p) => p.id === id);
-    if (!provider) throw new Error("Provider not found.");
-    Object.assign(provider, updates);
-    this.logAction("UPDATE_AI_PROVIDER", "AIProviderConfig", id, `Updated configuration for ${provider.name}.`);
-    return provider;
   }
 
   async setPrimaryAIProvider(id: string): Promise<void> {
@@ -307,7 +359,6 @@ class AdminDataService {
     this.logAction("SET_PRIMARY_AI_PROVIDER", "AIProviderConfig", id, `Set primary AI provider to ${id}.`);
   }
 
-  // FEATURE FLAGS & SYSTEM
   async getFeatureFlags(): Promise<FeatureFlag[]> {
     return this.featureFlags;
   }
@@ -324,7 +375,6 @@ class AdminDataService {
     return this.systemHealth;
   }
 
-  // ADMINS
   async getAdmins(): Promise<AdminUser[]> {
     return this.admins;
   }

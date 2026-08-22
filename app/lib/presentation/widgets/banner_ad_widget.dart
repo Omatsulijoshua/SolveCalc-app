@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/theme_controller.dart';
+import '../../domain/ads/ad_manager.dart';
 import '../../features/premium/premium_paywall_screen.dart';
 import '../providers/premium_provider.dart';
 
@@ -17,13 +18,16 @@ class _TopBannerAdWidgetState extends ConsumerState<TopBannerAdWidget> {
   @override
   Widget build(BuildContext context) {
     final premiumState = ref.watch(premiumProvider);
+    AdManager.instance.updatePremiumStatus(premiumState.isPremium);
 
-    // Completely hidden for Lifetime Pro users or temporarily dismissed
-    if (premiumState.isPremium || _isTemporarilyDismissed) {
+    // Completely hidden with 0 vertical space for Lifetime Pro users or when emergency disabled
+    if (!AdManager.instance.shouldShowAds || _isTemporarilyDismissed) {
       return const SizedBox.shrink();
     }
 
     final theme = ref.watch(themeControllerProvider);
+    final activeProvider = AdManager.instance.resolveActiveProvider();
+    final houseAd = AdManager.instance.houseAdProvider.getRandomHouseAd();
 
     return Container(
       width: double.infinity,
@@ -66,9 +70,9 @@ class _TopBannerAdWidgetState extends ConsumerState<TopBannerAdWidget> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
-                  'SolveCalc Pro Lifetime — \$10 USD',
-                  style: TextStyle(
+                Text(
+                  houseAd.title,
+                  style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
@@ -77,7 +81,7 @@ class _TopBannerAdWidgetState extends ConsumerState<TopBannerAdWidget> {
                   overflow: TextOverflow.ellipsis,
                 ),
                 Text(
-                  'Remove all banner & full-screen ads forever',
+                  houseAd.description,
                   style: TextStyle(
                     fontSize: 10,
                     color: theme.textSecondaryColor,
@@ -105,9 +109,9 @@ class _TopBannerAdWidgetState extends ConsumerState<TopBannerAdWidget> {
                 ),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Text(
-                'GO PRO',
-                style: TextStyle(
+              child: Text(
+                houseAd.ctaText,
+                style: const TextStyle(
                   color: Colors.black,
                   fontSize: 11,
                   fontWeight: FontWeight.w900,

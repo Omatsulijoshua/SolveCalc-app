@@ -179,3 +179,72 @@ export interface AIProviderConfig {
   currentDaySpendUsd: number;
   currentMonthSpendUsd: number;
 }
+
+// MONETIZATION & ADVERTISING MODELS
+export interface PremiumPurchase {
+  id: string;
+  userId: string;
+  userName: string;
+  platform: 'iOS' | 'Android';
+  productId: string;
+  priceUsd: number;
+  transactionId: string;
+  purchaseDate: string;
+  status: 'VERIFIED' | 'PENDING' | 'REFUNDED' | 'REVOKED';
+  receiptVerified: boolean;
+}
+
+export interface AdNetworkItem {
+  id: string;
+  name: string;
+  sdkName: string;
+  priority: number; // 1 = Primary, 2 = Secondary, etc.
+  isEnabled: boolean;
+  appOpenEnabled: boolean;
+  bannerEnabled: boolean;
+  nativeEnabled: boolean;
+  impressionsToday: number;
+  fillRatePercent: number;
+  ecpmUsd: number;
+  revenueTodayUsd: number;
+  healthStatus: 'HEALTHY' | 'DEGRADED' | 'ERROR';
+  lastHealthCheck: string;
+}
+
+export interface HouseAdCampaign {
+  id: string;
+  title: string;
+  description: string;
+  ctaText: string;
+  destination: string;
+  isActive: boolean;
+  priority: number;
+  impressions: number;
+  clicks: number;
+  ctrPercent: number;
+  createdAt: string;
+}
+
+export interface RemoteConfigVersion {
+  version: string;
+  publishedBy: string;
+  publishedAt: string;
+  emergencyMode: 'NORMAL' | 'ADS_DISABLED' | 'PREMIUM_ONLY' | 'HOUSE_ADS_ONLY';
+  primaryProvider: string;
+  fallbackProviders: string[];
+  appOpenCooldownMin: number;
+  appOpenMaxPerSession: number;
+  bannerRefreshSec: number;
+  changeSummary: string;
+  isActive: boolean;
+}
+
+export interface MonetizationAlert {
+  id: string;
+  severity: 'WARNING' | 'CRITICAL' | 'INFO';
+  title: string;
+  message: string;
+  providerId?: string;
+  timestamp: string;
+  isResolved: boolean;
+}

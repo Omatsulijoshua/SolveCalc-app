@@ -23,6 +23,13 @@ import {
   Cpu,
   AlertCircle,
   FolderGit2,
+  DollarSign,
+  Layers,
+  Radio,
+  Megaphone,
+  SlidersHorizontal,
+  BadgeAlert,
+  Zap,
 } from "lucide-react";
 import { useAuth } from "@/lib/authContext";
 import { cn } from "@/lib/utils";
@@ -50,6 +57,17 @@ export function Sidebar() {
       title: "OVERVIEW",
       items: [
         { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+      ],
+    },
+    {
+      title: "MONETIZATION & ADS",
+      items: [
+        { label: "Monetization Hub", href: "/monetization", icon: DollarSign, badge: "$19.8k" },
+        { label: "Premium Purchases", href: "/monetization/premium", icon: Zap, badge: "$10" },
+        { label: "Ad Networks & Waterfall", href: "/monetization/ad-providers", icon: Layers, badge: "AdMob" },
+        { label: "House Ads Campaigns", href: "/monetization/house-ads", icon: Megaphone },
+        { label: "Remote Ad Config", href: "/monetization/remote-config", icon: SlidersHorizontal, badge: "v43" },
+        { label: "Network Health Alerts", href: "/monetization/alerts", icon: BadgeAlert },
       ],
     },
     {
@@ -136,7 +154,7 @@ export function Sidebar() {
               const isActive =
                 item.href === "/dashboard"
                   ? pathname === "/dashboard" || pathname === "/"
-                  : pathname.startsWith(item.href);
+                  : pathname === item.href || (item.href !== "/monetization" && pathname.startsWith(item.href));
               const Icon = item.icon;
 
               return (
@@ -144,7 +162,7 @@ export function Sidebar() {
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-xs font-medium transition-all group",
+                    "flex items-center gap-3 rounded-lg px-3 py-2 text-xs font-medium transition-all group",
                     isActive
                       ? "bg-primary text-primary-foreground font-semibold shadow-sm shadow-primary/20"
                       : "text-muted-foreground hover:bg-accent hover:text-foreground"
@@ -152,7 +170,7 @@ export function Sidebar() {
                   title={collapsed ? item.label : undefined}
                 >
                   <Icon
-                    size={18}
+                    size={17}
                     className={cn(
                       "shrink-0",
                       isActive ? "text-primary-foreground" : "text-muted-foreground group-hover:text-foreground"
