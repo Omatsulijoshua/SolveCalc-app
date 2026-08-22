@@ -127,6 +127,24 @@ class CalculatorThemeConfig {
 }
 
 class ThemePresets {
+  static const CalculatorThemeConfig casio = CalculatorThemeConfig(
+    id: ThemePresetId.casio,
+    name: 'Casio Scientific',
+    primaryColor: Color(0xFF1E293B), // Crisp dark LCD pixel ink for display
+    secondaryColor: Color(0xFF1E232B),
+    accentColor: Color(0xFFF59E0B), // Solid golden amber for math operators
+    backgroundColor: Color(0xFF14171D), // Authentic dark Casio casing
+    surfaceColor: Color(0xFF86997E), // Authentic vintage greenish-gray LCD screen
+    numberButtonColor: Color(0xFFE5E7EB), // Solid off-white plastic Casio keys
+    operatorButtonColor: Color(0xFF282F3B), // Solid dark matte operator keys
+    functionButtonColor: Color(0xFF2E3744), // Solid dark matte scientific function keys
+    equalsButtonColor: Color(0xFF2563EB), // Solid iconic Casio royal blue = button
+    textPrimaryColor: Color(0xFF111827), // Crisp solid black numbers on white keys
+    textSecondaryColor: Color(0xFFF8FAFC), // Crisp solid white on dark function keys
+    equalsTextColor: Color(0xFFFFFFFF),
+    isDark: true,
+  );
+
   static const CalculatorThemeConfig white = CalculatorThemeConfig(
     id: ThemePresetId.white,
     name: 'Pure White',
@@ -140,27 +158,9 @@ class ThemePresets {
     functionButtonColor: Color(0xFFE2E8F0),
     equalsButtonColor: Color(0xFF0F172A),
     textPrimaryColor: Color(0xFF0F172A),
-    textSecondaryColor: Color(0xFF64748B),
+    textSecondaryColor: Color(0xFF475569),
     equalsTextColor: Color(0xFFFFFFFF),
     isDark: false,
-  );
-
-  static const CalculatorThemeConfig casio = CalculatorThemeConfig(
-    id: ThemePresetId.casio,
-    name: 'Casio Scientific',
-    primaryColor: Color(0xFF38BDF8),
-    secondaryColor: Color(0xFF262C36),
-    accentColor: Color(0xFFFBBF24),
-    backgroundColor: Color(0xFF1E222A),
-    surfaceColor: Color(0xFF8FA486), // Authentic retro Casio greenish LCD screen
-    numberButtonColor: Color(0xFFECEFF1), // Off-white Casio numbers
-    operatorButtonColor: Color(0xFF333A42), // Dark matte scientific buttons
-    functionButtonColor: Color(0xFF2A3038),
-    equalsButtonColor: Color(0xFF2563EB),
-    textPrimaryColor: Color(0xFFF8FAFC),
-    textSecondaryColor: Color(0xFF94A3B8),
-    equalsTextColor: Color(0xFFFFFFFF),
-    isDark: true,
   );
 
   static const CalculatorThemeConfig midnight = CalculatorThemeConfig(
@@ -191,10 +191,10 @@ class ThemePresets {
     surfaceColor: Color(0xFF1C1C1E),
     numberButtonColor: Color(0xFF2C2C2E),
     operatorButtonColor: Color(0xFFFF9500),
-    functionButtonColor: Color(0xFF505050),
+    functionButtonColor: Color(0xFF3A3A3C),
     equalsButtonColor: Color(0xFFFF9500),
     textPrimaryColor: Color(0xFFFFFFFF),
-    textSecondaryColor: Color(0xFFAAAAAA),
+    textSecondaryColor: Color(0xFFE5E5EA),
     equalsTextColor: Color(0xFFFFFFFF),
     isDark: true,
   );
@@ -290,8 +290,8 @@ class ThemePresets {
   );
 
   static List<CalculatorThemeConfig> get allPresets => [
-        white,
         casio,
+        white,
         midnight,
         classic,
         ocean,
@@ -303,10 +303,10 @@ class ThemePresets {
 
   static CalculatorThemeConfig getById(ThemePresetId id) {
     switch (id) {
-      case ThemePresetId.white:
-        return white;
       case ThemePresetId.casio:
         return casio;
+      case ThemePresetId.white:
+        return white;
       case ThemePresetId.midnight:
         return midnight;
       case ThemePresetId.classic:
@@ -322,7 +322,7 @@ class ThemePresets {
       case ThemePresetId.minimal:
         return minimal;
       case ThemePresetId.custom:
-        return midnight;
+        return casio;
     }
   }
 }

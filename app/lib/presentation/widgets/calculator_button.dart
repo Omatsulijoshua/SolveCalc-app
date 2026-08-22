@@ -46,9 +46,9 @@ class _CalculatorButtonState extends State<CalculatorButton>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 90),
+      duration: const Duration(milliseconds: 70),
     );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.93).animate(
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.94).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
   }
@@ -76,36 +76,47 @@ class _CalculatorButtonState extends State<CalculatorButton>
     return Expanded(
       flex: widget.flex,
       child: Padding(
-        padding: const EdgeInsets.all(4.0),
+        padding: const EdgeInsets.all(3.5),
         child: ScaleTransition(
           scale: _scaleAnimation,
-          child: Material(
-            color: widget.backgroundColor,
-            borderRadius: BorderRadius.circular(18),
-            elevation: widget.type == ButtonType.equals ? 3 : 0,
-            shadowColor: widget.backgroundColor.withAlpha(100),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(18),
-              onTapDown: _handleTapDown,
-              onTapUp: _handleTapUp,
-              onTapCancel: _handleTapCancel,
-              onTap: widget.onTap,
-              onLongPress: widget.onLongPress,
-              splashColor: Colors.white.withAlpha(40),
-              highlightColor: Colors.white.withAlpha(20),
-              child: Center(
-                child: widget.icon ??
-                    Text(
-                      widget.text,
-                      style: TextStyle(
-                        fontSize: widget.fontSize,
-                        fontWeight: widget.type == ButtonType.number
-                            ? FontWeight.w500
-                            : FontWeight.w600,
-                        color: widget.textColor,
-                        letterSpacing: 0.2,
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withAlpha(40),
+                  offset: const Offset(0, 2),
+                  blurRadius: 2,
+                ),
+              ],
+            ),
+            child: Material(
+              color: widget.backgroundColor,
+              borderRadius: BorderRadius.circular(14),
+              elevation: 0,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(14),
+                onTapDown: _handleTapDown,
+                onTapUp: _handleTapUp,
+                onTapCancel: _handleTapCancel,
+                onTap: widget.onTap,
+                onLongPress: widget.onLongPress,
+                splashColor: Colors.black.withAlpha(20),
+                highlightColor: Colors.black.withAlpha(10),
+                child: Center(
+                  child: widget.icon ??
+                      Text(
+                        widget.text,
+                        style: TextStyle(
+                          fontSize: widget.fontSize,
+                          fontWeight: widget.type == ButtonType.number
+                              ? FontWeight.w700
+                              : FontWeight.w600,
+                          color: widget.textColor,
+                          letterSpacing: 0.2,
+                        ),
                       ),
-                    ),
+                ),
               ),
             ),
           ),

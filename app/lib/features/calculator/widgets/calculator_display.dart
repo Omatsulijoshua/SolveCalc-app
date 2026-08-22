@@ -34,6 +34,12 @@ class CalculatorDisplay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final angleStr = state.angleMode.name.toUpperCase();
+    final isCasio = theme.id == ThemePresetId.casio;
+
+    // For Casio, use authentic dark digital LCD ink
+    final displayTextColor = isCasio ? const Color(0xFF0F172A) : theme.textPrimaryColor;
+    final displaySubtextColor = isCasio ? const Color(0xFF334155) : theme.textSecondaryColor;
+    final badgeColor = isCasio ? const Color(0xFF1E293B) : theme.primaryColor;
 
     return GestureDetector(
       onHorizontalDragEnd: (details) {
@@ -45,11 +51,21 @@ class CalculatorDisplay extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         decoration: BoxDecoration(
-          color: theme.surfaceColor.withAlpha(220),
+          color: isCasio ? theme.surfaceColor : theme.surfaceColor.withAlpha(220),
           borderRadius: const BorderRadius.only(
             bottomLeft: Radius.circular(28),
             bottomRight: Radius.circular(28),
           ),
+          border: isCasio
+              ? Border.all(color: const Color(0xFF475569).withAlpha(120), width: 1.5)
+              : null,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withAlpha(isCasio ? 50 : 20),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.end,
@@ -65,9 +81,9 @@ class CalculatorDisplay extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: theme.primaryColor.withAlpha(40),
+                      color: isCasio ? const Color(0xFF0F172A).withAlpha(30) : theme.primaryColor.withAlpha(40),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: theme.primaryColor.withAlpha(80)),
+                      border: Border.all(color: badgeColor.withAlpha(isCasio ? 120 : 80)),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -77,11 +93,11 @@ class CalculatorDisplay extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
-                            color: theme.primaryColor,
+                            color: badgeColor,
                           ),
                         ),
                         const SizedBox(width: 4),
-                        Icon(Icons.swap_horiz, size: 14, color: theme.primaryColor),
+                        Icon(Icons.swap_horiz, size: 14, color: badgeColor),
                       ],
                     ),
                   ),
@@ -93,8 +109,9 @@ class CalculatorDisplay extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: theme.functionButtonColor.withAlpha(120),
+                      color: isCasio ? const Color(0xFF0F172A).withAlpha(30) : theme.functionButtonColor.withAlpha(120),
                       borderRadius: BorderRadius.circular(12),
+                      border: isCasio ? Border.all(color: const Color(0xFF0F172A).withAlpha(60)) : null,
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -102,15 +119,15 @@ class CalculatorDisplay extends StatelessWidget {
                         Icon(
                           state.isScientific ? Icons.functions : Icons.calculate_outlined,
                           size: 14,
-                          color: theme.textSecondaryColor,
+                          color: isCasio ? const Color(0xFF0F172A) : theme.textSecondaryColor,
                         ),
                         const SizedBox(width: 4),
                         Text(
                           state.isScientific ? 'Scientific' : 'Basic',
                           style: TextStyle(
                             fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: theme.textSecondaryColor,
+                            fontWeight: FontWeight.w700,
+                            color: isCasio ? const Color(0xFF0F172A) : theme.textSecondaryColor,
                           ),
                         ),
                       ],
@@ -132,10 +149,8 @@ class CalculatorDisplay extends StatelessWidget {
                   state.expression.isEmpty ? '0' : state.expression,
                   style: TextStyle(
                     fontSize: state.isEvaluated ? 26 : 38,
-                    fontWeight: FontWeight.w400,
-                    color: state.isEvaluated
-                        ? theme.textSecondaryColor
-                        : theme.textPrimaryColor,
+                    fontWeight: isCasio ? FontWeight.w600 : FontWeight.w400,
+                    color: state.isEvaluated ? displaySubtextColor : displayTextColor,
                     letterSpacing: 0.5,
                   ),
                 ),
@@ -168,18 +183,18 @@ class CalculatorDisplay extends StatelessWidget {
                           '= ',
                           style: TextStyle(
                             fontSize: 26,
-                            fontWeight: FontWeight.w300,
-                            color: theme.accentColor.withAlpha(180),
+                            fontWeight: FontWeight.w400,
+                            color: isCasio ? const Color(0xFF0F172A).withAlpha(160) : theme.accentColor.withAlpha(180),
                           ),
                         ),
                       Text(
                         state.liveResult,
                         style: TextStyle(
                           fontSize: state.isEvaluated ? 44 : 26,
-                          fontWeight: state.isEvaluated ? FontWeight.bold : FontWeight.w500,
+                          fontWeight: isCasio ? FontWeight.w900 : (state.isEvaluated ? FontWeight.bold : FontWeight.w500),
                           color: state.isEvaluated
-                              ? theme.primaryColor
-                              : theme.textSecondaryColor,
+                              ? (isCasio ? const Color(0xFF0F172A) : theme.primaryColor)
+                              : displaySubtextColor,
                         ),
                       ),
                     ],

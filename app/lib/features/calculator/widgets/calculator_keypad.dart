@@ -18,14 +18,14 @@ class CalculatorKeypad extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       child: Column(
         children: [
           if (state.isScientific) ...[
             _buildScientificRow1(),
             _buildScientificRow2(),
             _buildScientificRow3(),
-            const SizedBox(height: 4),
+            const SizedBox(height: 3),
           ],
           _buildBasicRow1(),
           _buildBasicRow2(),
@@ -56,9 +56,9 @@ class CalculatorKeypad extends StatelessWidget {
     return Expanded(
       child: Row(
         children: [
-          _fnBtn('asin', () => notifier.inputFunction('asin'), fontSize: 16),
-          _fnBtn('acos', () => notifier.inputFunction('acos'), fontSize: 16),
-          _fnBtn('atan', () => notifier.inputFunction('atan'), fontSize: 16),
+          _fnBtn('asin', () => notifier.inputFunction('asin'), fontSize: 15),
+          _fnBtn('acos', () => notifier.inputFunction('acos'), fontSize: 15),
+          _fnBtn('atan', () => notifier.inputFunction('atan'), fontSize: 15),
           _fnBtn('√', () => notifier.inputFunction('sqrt')),
           _fnBtn('^', () => notifier.inputOperator('^')),
         ],
@@ -82,26 +82,27 @@ class CalculatorKeypad extends StatelessWidget {
 
   // --- Basic Rows ---
   Widget _buildBasicRow1() {
+    final isCasio = theme.id == ThemePresetId.casio;
     return Expanded(
       child: Row(
         children: [
           _actionBtn(
             'AC',
             () => notifier.clear(),
-            backgroundColor: theme.functionButtonColor,
-            textColor: theme.isDark ? const Color(0xFFEF4444) : const Color(0xFFDC2626),
+            backgroundColor: isCasio ? const Color(0xFFEA580C) : theme.functionButtonColor,
+            textColor: isCasio ? Colors.white : (theme.isDark ? const Color(0xFFEF4444) : const Color(0xFFDC2626)),
           ),
           _actionBtn(
             '( )',
             () => notifier.inputParenthesis(),
             backgroundColor: theme.functionButtonColor,
-            textColor: theme.textPrimaryColor,
+            textColor: theme.textSecondaryColor,
           ),
           _actionBtn(
             '%',
             () => notifier.inputPercent(),
             backgroundColor: theme.functionButtonColor,
-            textColor: theme.textPrimaryColor,
+            textColor: theme.textSecondaryColor,
           ),
           _actionBtn(
             '÷',
@@ -212,12 +213,12 @@ class CalculatorKeypad extends StatelessWidget {
     );
   }
 
-  Widget _fnBtn(String text, VoidCallback onTap, {double fontSize = 18}) {
+  Widget _fnBtn(String text, VoidCallback onTap, {double fontSize = 17}) {
     return CalculatorButton(
       text: text,
       type: ButtonType.function,
       onTap: onTap,
-      backgroundColor: theme.functionButtonColor.withAlpha(150),
+      backgroundColor: theme.functionButtonColor,
       textColor: theme.textSecondaryColor,
       fontSize: fontSize,
     );
