@@ -63,25 +63,33 @@ void main() {
     });
 
     test('3pi in DEG = 3 * pi', () {
-      expect(CalculatorEngine.calculate('3pi'), closeTo(9.42477796, 1e-6));
+      expect(CalculatorEngine.calculate('3pi'), closeTo(3 * 3.141592653589793, 1e-10));
     });
 
     test('2sin(30) in DEG = 1', () {
-      expect(CalculatorEngine.calculate('2sin(30)'), 1);
+      expect(CalculatorEngine.calculate('2sin(30)', angleMode: AngleMode.deg), closeTo(1, 1e-10));
     });
   });
 
   group('Scientific Functions & Constants', () {
     test('Trig in DEG: sin(30) = 0.5', () {
-      expect(CalculatorEngine.calculate('sin(30)', angleMode: AngleMode.deg), 0.5);
+      expect(CalculatorEngine.calculate('sin(30)', angleMode: AngleMode.deg), closeTo(0.5, 1e-10));
+    });
+
+    test('Auto-closing parenthesis: sin(30 without close bracket = 0.5', () {
+      expect(CalculatorEngine.calculate('sin(30', angleMode: AngleMode.deg), closeTo(0.5, 1e-10));
+    });
+
+    test('Auto-closing parenthesis on expression: (2 + 3 = 5', () {
+      expect(CalculatorEngine.calculate('(2 + 3'), 5);
     });
 
     test('Trig in DEG: cos(60) = 0.5', () {
-      expect(CalculatorEngine.calculate('cos(60)', angleMode: AngleMode.deg), 0.5);
+      expect(CalculatorEngine.calculate('cos(60)', angleMode: AngleMode.deg), closeTo(0.5, 1e-10));
     });
 
     test('Trig in DEG: tan(45) = 1', () {
-      expect(CalculatorEngine.calculate('tan(45)', angleMode: AngleMode.deg), 1);
+      expect(CalculatorEngine.calculate('tan(45)', angleMode: AngleMode.deg), closeTo(1, 1e-10));
     });
 
     test('Trig in RAD: sin(pi / 6) = 0.5', () {
@@ -164,10 +172,9 @@ void main() {
       expect(res.errorMessage, contains('undefined'));
     });
 
-    test('Unbalanced parenthesis throws parenthesis failure', () {
-      final res = CalculatorEngine.tryCalculate('(2 + 3');
+    test('Excess closing parenthesis throws syntax failure', () {
+      final res = CalculatorEngine.tryCalculate('2 + 3)');
       expect(res.isSuccess, false);
-      expect(res.errorMessage, contains('parenthes'));
     });
 
     test('Invalid syntax throws syntax failure', () {

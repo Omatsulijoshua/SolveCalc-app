@@ -2,7 +2,7 @@ class MathFormatter {
   static String formatResult(num value, {int maxPrecision = 10}) {
     if (value.isNaN) return 'Error';
     if (value.isInfinite) return value.isNegative ? '-Infinity' : 'Infinity';
-    
+
     // Exact integers
     if (value == value.roundToDouble() && value.abs() < 1e14) {
       return value.toInt().toString();
@@ -26,14 +26,32 @@ class MathFormatter {
     return str;
   }
 
+  /// Automatically appends matching closing parentheses for any unclosed open parentheses
+  static String autoCloseParentheses(String input) {
+    int openCount = 0;
+    for (int i = 0; i < input.length; i++) {
+      if (input[i] == '(') openCount++;
+      if (input[i] == ')') {
+        if (openCount > 0) {
+          openCount--;
+        }
+      }
+    }
+    if (openCount > 0) {
+      return input + (')' * openCount);
+    }
+    return input;
+  }
+
   static String sanitizeExpression(String input) {
-    return input
+    final formatted = input
         .replaceAll('×', '*')
         .replaceAll('−', '-')
         .replaceAll('÷', '/')
         .replaceAll('²', '^2')
         .replaceAll('³', '^3')
         .replaceAll('π', 'pi');
+    return autoCloseParentheses(formatted.trim());
   }
 
   static String prettifyExpression(String input) {
