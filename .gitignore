@@ -1,0 +1,38 @@
+# Node / Next.js
+admin/node_modules/
+admin/.next/
+admin/out/
+admin/build/
+admin/.DS_Store
+admin/*.pem
+admin/npm-debug.log*
+admin/yarn-debug.log*
+admin/yarn-error.log*
+
+# Flutter / Dart
+app/.dart_tool/
+app/.flutter-plugins
+app/.flutter-plugins-dependencies
+app/build/
+app/ephemeral/
+app/.packages
+app/.pub-cache/
+app/.pub/
+
+# Android
+app/android/.gradle/
+app/android/local.properties
+app/android/app/build/
+app/android/**/build/
+
+# iOS
+app/ios/Pods/
+app/ios/.symlinks/
+app/ios/Flutter/Flutter.framework
+app/ios/Flutter/Flutter.podspec
+app/ios/Flutter/Generated.xcconfig
+app/ios/Flutter/app.framework
+
+# General
+.DS_Store
+*.log
