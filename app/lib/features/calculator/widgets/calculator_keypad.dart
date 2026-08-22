@@ -96,13 +96,13 @@ class CalculatorKeypad extends StatelessWidget {
             '( )',
             () => notifier.inputParenthesis(),
             backgroundColor: theme.functionButtonColor,
-            textColor: theme.textSecondaryColor,
+            textColor: theme.isDark ? const Color(0xFFF8FAFC) : theme.textPrimaryColor,
           ),
           _actionBtn(
             '%',
             () => notifier.inputPercent(),
             backgroundColor: theme.functionButtonColor,
-            textColor: theme.textSecondaryColor,
+            textColor: theme.isDark ? const Color(0xFFF8FAFC) : theme.textPrimaryColor,
           ),
           _actionBtn(
             '÷',
@@ -174,6 +174,9 @@ class CalculatorKeypad extends StatelessWidget {
   }
 
   Widget _buildBasicRow5() {
+    final isLightKey = ThemeData.estimateBrightnessForColor(theme.numberButtonColor) == Brightness.light;
+    final numTextColor = isLightKey ? const Color(0xFF0F172A) : const Color(0xFFFFFFFF);
+
     return Expanded(
       child: Row(
         children: [
@@ -181,14 +184,16 @@ class CalculatorKeypad extends StatelessWidget {
             '±',
             () => notifier.toggleSign(),
             backgroundColor: theme.numberButtonColor,
-            textColor: theme.textPrimaryColor,
+            textColor: numTextColor,
+            fontSize: 22,
           ),
           _numBtn('0'),
           _actionBtn(
             '.',
             () => notifier.inputDecimal(),
             backgroundColor: theme.numberButtonColor,
-            textColor: theme.textPrimaryColor,
+            textColor: numTextColor,
+            fontSize: 24,
           ),
           _actionBtn(
             '=',
@@ -204,12 +209,16 @@ class CalculatorKeypad extends StatelessWidget {
   }
 
   Widget _numBtn(String digit) {
+    final isLightKey = ThemeData.estimateBrightnessForColor(theme.numberButtonColor) == Brightness.light;
+    final numTextColor = isLightKey ? const Color(0xFF0F172A) : const Color(0xFFFFFFFF);
+
     return CalculatorButton(
       text: digit,
       type: ButtonType.number,
       onTap: () => notifier.inputDigit(digit),
       backgroundColor: theme.numberButtonColor,
-      textColor: theme.textPrimaryColor,
+      textColor: numTextColor,
+      fontSize: 24,
     );
   }
 
@@ -219,7 +228,7 @@ class CalculatorKeypad extends StatelessWidget {
       type: ButtonType.function,
       onTap: onTap,
       backgroundColor: theme.functionButtonColor,
-      textColor: theme.textSecondaryColor,
+      textColor: theme.isDark ? const Color(0xFFF8FAFC) : theme.textPrimaryColor,
       fontSize: fontSize,
     );
   }

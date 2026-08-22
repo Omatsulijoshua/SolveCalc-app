@@ -130,17 +130,17 @@ class ThemePresets {
   static const CalculatorThemeConfig casio = CalculatorThemeConfig(
     id: ThemePresetId.casio,
     name: 'Casio Scientific',
-    primaryColor: Color(0xFF1E293B), // Crisp dark LCD pixel ink for display
+    primaryColor: Color(0xFF38BDF8), // Bright cyan/sky blue for active indicators & icons
     secondaryColor: Color(0xFF1E232B),
-    accentColor: Color(0xFFF59E0B), // Solid golden amber for math operators
-    backgroundColor: Color(0xFF14171D), // Authentic dark Casio casing
-    surfaceColor: Color(0xFF86997E), // Authentic vintage greenish-gray LCD screen
-    numberButtonColor: Color(0xFFE5E7EB), // Solid off-white plastic Casio keys
+    accentColor: Color(0xFFF59E0B), // Solid golden amber for math operators (÷, ×, −, +)
+    backgroundColor: Color(0xFF14171D), // Deep dark matte Casio casing
+    surfaceColor: Color(0xFF86997E), // Vintage greenish-gray dot-matrix LCD screen
+    numberButtonColor: Color(0xFFFFFFFF), // Solid bright white number keys
     operatorButtonColor: Color(0xFF282F3B), // Solid dark matte operator keys
-    functionButtonColor: Color(0xFF2E3744), // Solid dark matte scientific function keys
+    functionButtonColor: Color(0xFF2E3744), // Solid dark slate scientific function keys
     equalsButtonColor: Color(0xFF2563EB), // Solid iconic Casio royal blue = button
-    textPrimaryColor: Color(0xFF111827), // Crisp solid black numbers on white keys
-    textSecondaryColor: Color(0xFFF8FAFC), // Crisp solid white on dark function keys
+    textPrimaryColor: Color(0xFF0F172A), // Bold deep black numbers on white keys
+    textSecondaryColor: Color(0xFF94A3B8), // High-contrast silver for unselected icons and dark keys
     equalsTextColor: Color(0xFFFFFFFF),
     isDark: true,
   );

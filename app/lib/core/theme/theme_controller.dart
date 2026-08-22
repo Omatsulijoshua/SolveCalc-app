@@ -69,10 +69,37 @@ class ThemeController extends StateNotifier<CalculatorThemeConfig> {
         elevation: 0,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: state.backgroundColor,
+        indicatorColor: state.primaryColor.withAlpha(40),
+        surfaceTintColor: Colors.transparent,
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: state.primaryColor,
+            );
+          }
+          return TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+          );
+        }),
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return IconThemeData(color: state.primaryColor);
+          }
+          return IconThemeData(
+            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+          );
+        }),
+      ),
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
-        backgroundColor: state.surfaceColor,
+        backgroundColor: state.backgroundColor,
         selectedItemColor: state.primaryColor,
-        unselectedItemColor: state.textSecondaryColor,
+        unselectedItemColor: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
         type: BottomNavigationBarType.fixed,
         elevation: 8,
       ),

@@ -37,8 +37,11 @@ class _AppShellState extends ConsumerState<AppShell> {
   @override
   Widget build(BuildContext context) {
     final theme = ref.watch(themeControllerProvider);
+    final isDark = theme.isDark;
+    final unselectedIconColor = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
 
     return Scaffold(
+      backgroundColor: theme.backgroundColor,
       body: SafeArea(
         bottom: false,
         child: Column(
@@ -54,34 +57,45 @@ class _AppShellState extends ConsumerState<AppShell> {
           ],
         ),
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _currentIndex,
-        backgroundColor: theme.surfaceColor,
-        indicatorColor: theme.primaryColor.withAlpha(50),
-        surfaceTintColor: Colors.transparent,
-        onDestinationSelected: (idx) => setState(() => _currentIndex = idx),
-        destinations: [
-          NavigationDestination(
-            icon: Icon(Icons.calculate_outlined, color: theme.textSecondaryColor),
-            selectedIcon: Icon(Icons.calculate, color: theme.primaryColor),
-            label: 'Calculator',
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: theme.backgroundColor,
+          border: Border(
+            top: BorderSide(
+              color: isDark ? Colors.white.withAlpha(15) : Colors.black.withAlpha(20),
+              width: 1,
+            ),
           ),
-          NavigationDestination(
-            icon: Icon(Icons.camera_alt_outlined, color: theme.textSecondaryColor),
-            selectedIcon: Icon(Icons.camera_alt, color: theme.primaryColor),
-            label: 'Scan',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.history_outlined, color: theme.textSecondaryColor),
-            selectedIcon: Icon(Icons.history, color: theme.primaryColor),
-            label: 'History',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.settings_outlined, color: theme.textSecondaryColor),
-            selectedIcon: Icon(Icons.settings, color: theme.primaryColor),
-            label: 'Settings',
-          ),
-        ],
+        ),
+        child: NavigationBar(
+          selectedIndex: _currentIndex,
+          backgroundColor: theme.backgroundColor,
+          indicatorColor: theme.primaryColor.withAlpha(40),
+          surfaceTintColor: Colors.transparent,
+          onDestinationSelected: (idx) => setState(() => _currentIndex = idx),
+          destinations: [
+            NavigationDestination(
+              icon: Icon(Icons.calculate_outlined, color: unselectedIconColor),
+              selectedIcon: Icon(Icons.calculate, color: theme.primaryColor),
+              label: 'Calculator',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.camera_alt_outlined, color: unselectedIconColor),
+              selectedIcon: Icon(Icons.camera_alt, color: theme.primaryColor),
+              label: 'Scan',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.history_outlined, color: unselectedIconColor),
+              selectedIcon: Icon(Icons.history, color: theme.primaryColor),
+              label: 'History',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.settings_outlined, color: unselectedIconColor),
+              selectedIcon: Icon(Icons.settings, color: theme.primaryColor),
+              label: 'Settings',
+            ),
+          ],
+        ),
       ),
     );
   }
