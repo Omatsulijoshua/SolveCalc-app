@@ -1,9 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/theme/theme_presets.dart';
 import '../../../presentation/providers/calculator_provider.dart';
 
-class CalculatorDisplay extends StatelessWidget {
+class CalculatorDisplay extends StatefulWidget {
   final CalculatorState state;
   final CalculatorThemeConfig theme;
   final VoidCallback onToggleAngleMode;
@@ -19,6 +20,32 @@ class CalculatorDisplay extends StatelessWidget {
     required this.onSwipeDelete,
   });
 
+  @override
+  State<CalculatorDisplay> createState() => _CalculatorDisplayState();
+}
+
+class _CalculatorDisplayState extends State<CalculatorDisplay> {
+  Timer? _blinkTimer;
+  bool _showCursor = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _blinkTimer = Timer.periodic(const Duration(milliseconds: 530), (_) {
+      if (mounted && !widget.state.isEvaluated && widget.state.expression.isNotEmpty) {
+        setState(() {
+          _showCursor = !_showCursor;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _blinkTimer?.cancel();
+    super.dispose();
+  }
+
   void _copyToClipboard(BuildContext context, String text) {
     if (text.isEmpty) return;
     Clipboard.setData(ClipboardData(text: text));
@@ -33,6 +60,8 @@ class CalculatorDisplay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final state = widget.state;
+    final theme = widget.theme;
     final angleStr = state.angleMode.name.toUpperCase();
     final isCasio = theme.id == ThemePresetId.casio;
 
@@ -40,11 +69,16 @@ class CalculatorDisplay extends StatelessWidget {
     final displayTextColor = isCasio ? const Color(0xFF0F172A) : theme.textPrimaryColor;
     final displaySubtextColor = isCasio ? const Color(0xFF334155) : theme.textSecondaryColor;
     final badgeColor = isCasio ? const Color(0xFF1E293B) : theme.primaryColor;
+    final cursorColor = isCasio ? const Color(0xFF0F172A) : theme.primaryColor;
+
+    final pos = state.cursorPosition.clamp(0, state.expression.length);
+    final before = state.expression.substring(0, pos);
+    final after = state.expression.substring(pos);
 
     return GestureDetector(
       onHorizontalDragEnd: (details) {
         if (details.primaryVelocity != null && details.primaryVelocity!.abs() > 100) {
-          onSwipeDelete();
+          widget.onSwipeDelete();
         }
       },
       child: Container(
@@ -77,7 +111,7 @@ class CalculatorDisplay extends StatelessWidget {
               children: [
                 // Angle Mode Badge
                 GestureDetector(
-                  onTap: onToggleAngleMode,
+                  onTap: widget.onToggleAngleMode,
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
@@ -105,7 +139,7 @@ class CalculatorDisplay extends StatelessWidget {
 
                 // Scientific / Basic Mode Toggle
                 GestureDetector(
-                  onTap: onToggleScientific,
+                  onTap: widget.onToggleScientific,
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
@@ -139,21 +173,59 @@ class CalculatorDisplay extends StatelessWidget {
 
             const Spacer(),
 
-            // Expression Input Line
+            // Expression Input Line with Blinking Cursor
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               reverse: true,
               child: GestureDetector(
                 onLongPress: () => _copyToClipboard(context, state.expression),
-                child: Text(
-                  state.expression.isEmpty ? '0' : state.expression,
-                  style: TextStyle(
-                    fontSize: state.isEvaluated ? 26 : 38,
-                    fontWeight: isCasio ? FontWeight.w600 : FontWeight.w400,
-                    color: state.isEvaluated ? displaySubtextColor : displayTextColor,
-                    letterSpacing: 0.5,
-                  ),
-                ),
+                child: state.expression.isEmpty
+                    ? Text(
+                        '0',
+                        style: TextStyle(
+                          fontSize: 38,
+                          fontWeight: isCasio ? FontWeight.w600 : FontWeight.w400,
+                          color: displayTextColor,
+                          letterSpacing: 0.5,
+                        ),
+                      )
+                    : RichText(
+                        text: TextSpan(
+                          children: [
+                            TextSpan(
+                              text: before,
+                              style: TextStyle(
+                                fontSize: state.isEvaluated ? 26 : 38,
+                                fontWeight: isCasio ? FontWeight.w600 : FontWeight.w400,
+                                color: state.isEvaluated ? displaySubtextColor : displayTextColor,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            if (!state.isEvaluated && _showCursor)
+                              WidgetSpan(
+                                alignment: PlaceholderAlignment.middle,
+                                child: Container(
+                                  width: 2.5,
+                                  height: 32,
+                                  margin: const EdgeInsets.symmetric(horizontal: 1),
+                                  decoration: BoxDecoration(
+                                    color: cursorColor,
+                                    borderRadius: BorderRadius.circular(1.5),
+                                  ),
+                                ),
+                              ),
+                            TextSpan(
+                              text: after,
+                              style: TextStyle(
+                                fontSize: state.isEvaluated ? 26 : 38,
+                                fontWeight: isCasio ? FontWeight.w600 : FontWeight.w400,
+                                color: state.isEvaluated ? displaySubtextColor : displayTextColor,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
               ),
             ),
 

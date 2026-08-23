@@ -10,6 +10,7 @@ import '../../core/theme/theme_controller.dart';
 
 class CalculatorState {
   final String expression;
+  final int cursorPosition;
   final String liveResult;
   final String? errorMessage;
   final AngleMode angleMode;
@@ -18,6 +19,7 @@ class CalculatorState {
 
   const CalculatorState({
     required this.expression,
+    this.cursorPosition = 0,
     required this.liveResult,
     this.errorMessage,
     required this.angleMode,
@@ -27,6 +29,7 @@ class CalculatorState {
 
   CalculatorState copyWith({
     String? expression,
+    int? cursorPosition,
     String? liveResult,
     String? errorMessage,
     bool clearError = false,
@@ -34,8 +37,11 @@ class CalculatorState {
     bool? isScientific,
     bool? isEvaluated,
   }) {
+    final newExpr = expression ?? this.expression;
+    final newPos = cursorPosition ?? (expression != null ? newExpr.length : this.cursorPosition);
     return CalculatorState(
-      expression: expression ?? this.expression,
+      expression: newExpr,
+      cursorPosition: newPos.clamp(0, newExpr.length),
       liveResult: liveResult ?? this.liveResult,
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
       angleMode: angleMode ?? this.angleMode,
@@ -60,6 +66,7 @@ class CalculatorNotifier extends StateNotifier<CalculatorState> {
   CalculatorNotifier(this._storage, this._historyRepo)
       : super(CalculatorState(
           expression: '',
+          cursorPosition: 0,
           liveResult: '',
           angleMode: _parseAngleMode(_storage.getAngleMode()),
           isScientific: _storage.isScientificDefault(),
@@ -87,12 +94,17 @@ class CalculatorNotifier extends StateNotifier<CalculatorState> {
     if (state.isEvaluated) {
       state = state.copyWith(
         expression: digit,
+        cursorPosition: digit.length,
         isEvaluated: false,
         clearError: true,
       );
     } else {
+      final pos = state.cursorPosition;
+      final expr = state.expression;
+      final newExpr = '${expr.substring(0, pos)}$digit${expr.substring(pos)}';
       state = state.copyWith(
-        expression: state.expression + digit,
+        expression: newExpr,
+        cursorPosition: pos + digit.length,
         clearError: true,
       );
     }
@@ -104,16 +116,24 @@ class CalculatorNotifier extends StateNotifier<CalculatorState> {
     if (state.isEvaluated || state.expression.isEmpty) {
       state = state.copyWith(
         expression: '0.',
+        cursorPosition: 2,
         isEvaluated: false,
         clearError: true,
       );
     } else {
-      // Find the last number token
-      final tokens = state.expression.split(RegExp(r'[+\−×÷*/^()%]'));
+      final pos = state.cursorPosition;
+      final expr = state.expression;
+      final before = expr.substring(0, pos);
+      final after = expr.substring(pos);
+
+      // Find the last number token in before
+      final tokens = before.split(RegExp(r'[+\−×÷*/^()%]'));
       final lastToken = tokens.isNotEmpty ? tokens.last : '';
       if (!lastToken.contains('.')) {
+        final newExpr = '$before.$after';
         state = state.copyWith(
-          expression: '${state.expression}.',
+          expression: newExpr,
+          cursorPosition: pos + 1,
           clearError: true,
         );
       }
@@ -129,8 +149,10 @@ class CalculatorNotifier extends StateNotifier<CalculatorState> {
     if (op == '-') formattedOp = '−';
 
     if (state.isEvaluated && state.liveResult.isNotEmpty && state.errorMessage == null) {
+      final expr = '${state.liveResult} $formattedOp ';
       state = state.copyWith(
-        expression: '${state.liveResult} $formattedOp ',
+        expression: expr,
+        cursorPosition: expr.length,
         isEvaluated: false,
         clearError: true,
       );
@@ -138,47 +160,77 @@ class CalculatorNotifier extends StateNotifier<CalculatorState> {
       if (formattedOp == '−' || formattedOp == '+') {
         state = state.copyWith(
           expression: formattedOp,
+          cursorPosition: 1,
           clearError: true,
         );
       }
     } else {
-      final trimmed = state.expression.trimRight();
-      final endsWithOp = trimmed.endsWith('+') ||
-          trimmed.endsWith('−') ||
-          trimmed.endsWith('×') ||
-          trimmed.endsWith('÷') ||
-          trimmed.endsWith('^') ||
-          trimmed.endsWith('*') ||
-          trimmed.endsWith('/');
+      var pos = state.cursorPosition;
+      var expr = state.expression;
 
-      if (endsWithOp) {
-        // Replace previous operator
-        final newExpr = trimmed.substring(0, trimmed.length - 1).trimRight();
-        state = state.copyWith(
-          expression: '$newExpr $formattedOp ',
-          clearError: true,
-        );
-      } else {
-        state = state.copyWith(
-          expression: '$trimmed $formattedOp ',
-          clearError: true,
-        );
+      // If cursor is right before ')' at the end of a closed bracket (e.g. sin(8|)),
+      // step past the ')' so the operator is placed outside!
+      while (pos < expr.length && expr[pos] == ')') {
+        pos++;
       }
+
+      final before = expr.substring(0, pos).trimRight();
+      final after = expr.substring(pos).trimLeft();
+
+      final endsWithOp = before.endsWith('+') ||
+          before.endsWith('−') ||
+          before.endsWith('×') ||
+          before.endsWith('÷') ||
+          before.endsWith('^') ||
+          before.endsWith('*') ||
+          before.endsWith('/');
+
+      String newBefore;
+      if (endsWithOp) {
+        newBefore = before.substring(0, before.length - 1).trimRight();
+      } else {
+        newBefore = before;
+      }
+
+      final newExpr = '$newBefore $formattedOp $after';
+      final newPos = '$newBefore $formattedOp '.length;
+
+      state = state.copyWith(
+        expression: newExpr,
+        cursorPosition: newPos,
+        clearError: true,
+      );
     }
     _updateLiveResult();
   }
 
+  /// Automatically opens AND closes parentheses: e.g. "sin()" and places cursor inside!
   void inputFunction(String funcName) {
     _triggerHaptic();
     if (state.isEvaluated) {
+      final newExpr = '$funcName()';
       state = state.copyWith(
-        expression: '$funcName(',
+        expression: newExpr,
+        cursorPosition: funcName.length + 1,
         isEvaluated: false,
         clearError: true,
       );
     } else {
+      final pos = state.cursorPosition;
+      final expr = state.expression;
+
+      // If typed immediately after a number or constant (e.g. 5sin), insert implicit multiplication
+      final before = expr.substring(0, pos);
+      final after = expr.substring(pos);
+      final needsMultiply = before.isNotEmpty && RegExp(r'[0-9πe)]$').hasMatch(before);
+
+      final prefix = needsMultiply ? ' × ' : '';
+      final newExpr = '$before$prefix$funcName()$after';
+      final newPos = (before + prefix + funcName + '(').length;
+
       state = state.copyWith(
-        expression: '${state.expression}$funcName(',
+        expression: newExpr,
+        cursorPosition: newPos,
         clearError: true,
       );
     }
@@ -190,12 +242,17 @@ class CalculatorNotifier extends StateNotifier<CalculatorState> {
     if (state.isEvaluated) {
       state = state.copyWith(
         expression: constant,
+        cursorPosition: constant.length,
         isEvaluated: false,
         clearError: true,
       );
     } else {
+      final pos = state.cursorPosition;
+      final expr = state.expression;
+      final newExpr = '${expr.substring(0, pos)}$constant${expr.substring(pos)}';
       state = state.copyWith(
-        expression: state.expression + constant,
+        expression: newExpr,
+        cursorPosition: pos + constant.length,
         clearError: true,
       );
     }
@@ -204,27 +261,42 @@ class CalculatorNotifier extends StateNotifier<CalculatorState> {
 
   void inputParenthesis() {
     _triggerHaptic();
+    final pos = state.cursorPosition;
     final expr = state.expression;
-    final openCount = '('.allMatches(expr).length;
-    final closeCount = ')'.allMatches(expr).length;
 
     if (expr.isEmpty || state.isEvaluated) {
       state = state.copyWith(
-        expression: '(',
+        expression: '()',
+        cursorPosition: 1,
         isEvaluated: false,
         clearError: true,
       );
     } else {
-      final lastChar = expr.isNotEmpty ? expr[expr.length - 1] : '';
-      if (openCount > closeCount &&
-          (RegExp(r'[0-9πe)%!]').hasMatch(lastChar))) {
+      final before = expr.substring(0, pos);
+      final after = expr.substring(pos);
+      final openCount = '('.allMatches(expr).length;
+      final closeCount = ')'.allMatches(expr).length;
+
+      // If cursor is directly before ')' and brackets are balanced, step over ')'
+      if (after.startsWith(')')) {
         state = state.copyWith(
-          expression: '$expr)',
+          cursorPosition: pos + 1,
+          clearError: true,
+        );
+      } else if (openCount > closeCount) {
+        // Insert closing ')'
+        final newExpr = '$before)$after';
+        state = state.copyWith(
+          expression: newExpr,
+          cursorPosition: pos + 1,
           clearError: true,
         );
       } else {
+        // Insert pair '()' and put cursor inside
+        final newExpr = '$before()$after';
         state = state.copyWith(
-          expression: '$expr(',
+          expression: newExpr,
+          cursorPosition: pos + 1,
           clearError: true,
         );
       }
@@ -235,8 +307,12 @@ class CalculatorNotifier extends StateNotifier<CalculatorState> {
   void inputPercent() {
     _triggerHaptic();
     if (state.expression.isNotEmpty) {
+      final pos = state.cursorPosition;
+      final expr = state.expression;
+      final newExpr = '${expr.substring(0, pos)}%${expr.substring(pos)}';
       state = state.copyWith(
-        expression: '${state.expression}%',
+        expression: newExpr,
+        cursorPosition: pos + 1,
         clearError: true,
       );
       _updateLiveResult();
@@ -246,8 +322,12 @@ class CalculatorNotifier extends StateNotifier<CalculatorState> {
   void inputPower(String pow) {
     _triggerHaptic();
     if (state.expression.isNotEmpty) {
+      final pos = state.cursorPosition;
+      final expr = state.expression;
+      final newExpr = '${expr.substring(0, pos)}$pow${expr.substring(pos)}';
       state = state.copyWith(
-        expression: state.expression + pow,
+        expression: newExpr,
+        cursorPosition: pos + pow.length,
         clearError: true,
       );
       _updateLiveResult();
@@ -257,15 +337,17 @@ class CalculatorNotifier extends StateNotifier<CalculatorState> {
   void toggleSign() {
     _triggerHaptic();
     if (state.expression.isEmpty) {
-      state = state.copyWith(expression: '−', clearError: true);
+      state = state.copyWith(expression: '−', cursorPosition: 1, clearError: true);
     } else if (state.expression.startsWith('−') || state.expression.startsWith('-')) {
       state = state.copyWith(
         expression: state.expression.substring(1),
+        cursorPosition: (state.cursorPosition - 1).clamp(0, state.expression.length - 1),
         clearError: true,
       );
     } else {
       state = state.copyWith(
         expression: '−${state.expression}',
+        cursorPosition: state.cursorPosition + 1,
         clearError: true,
       );
     }
@@ -281,22 +363,77 @@ class CalculatorNotifier extends StateNotifier<CalculatorState> {
       return;
     }
 
-    String expr = state.expression;
-    // Check if ends with function like "sin(", "cos(", "asin(" etc.
-    final funcMatch = RegExp(r'[a-zA-Z]+\($').firstMatch(expr);
-    if (funcMatch != null) {
-      expr = expr.substring(0, funcMatch.start);
-    } else if (expr.endsWith(' ')) {
-      // Remove trailing operator and spacing " + "
-      expr = expr.trimRight();
-      if (expr.isNotEmpty) {
-        expr = expr.substring(0, expr.length - 1).trimRight();
-      }
-    } else {
-      expr = expr.substring(0, expr.length - 1);
+    final pos = state.cursorPosition;
+    final expr = state.expression;
+    if (pos == 0) return;
+
+    final before = expr.substring(0, pos);
+    final after = expr.substring(pos);
+
+    // If deleting right inside empty "func()" e.g. "sin(|)"
+    final emptyFuncMatch = RegExp(r'([a-zA-Z]+|\u221B|\u221A)\($').firstMatch(before);
+    if (emptyFuncMatch != null && after.startsWith(')')) {
+      final funcStart = emptyFuncMatch.start;
+      final newExpr = expr.substring(0, funcStart) + after.substring(1);
+      state = state.copyWith(
+        expression: newExpr,
+        cursorPosition: funcStart,
+        clearError: true,
+      );
+      _updateLiveResult();
+      return;
     }
 
-    state = state.copyWith(expression: expr, clearError: true);
+    // If deleting right inside empty pair "()"
+    if (before.endsWith('(') && after.startsWith(')')) {
+      final newExpr = before.substring(0, before.length - 1) + after.substring(1);
+      state = state.copyWith(
+        expression: newExpr,
+        cursorPosition: before.length - 1,
+        clearError: true,
+      );
+      _updateLiveResult();
+      return;
+    }
+
+    // Check if before ends with a function name + "(" e.g. "sin("
+    final funcMatch = RegExp(r'([a-zA-Z]+|\u221B|\u221A)\($').firstMatch(before);
+    if (funcMatch != null) {
+      final newBefore = before.substring(0, funcMatch.start);
+      final newExpr = newBefore + after;
+      state = state.copyWith(
+        expression: newExpr,
+        cursorPosition: newBefore.length,
+        clearError: true,
+      );
+      _updateLiveResult();
+      return;
+    }
+
+    // Check if before ends with operator spacing " + "
+    if (before.endsWith(' ')) {
+      final trimmedBefore = before.trimRight();
+      if (trimmedBefore.isNotEmpty) {
+        final opRemoved = trimmedBefore.substring(0, trimmedBefore.length - 1).trimRight();
+        final newExpr = opRemoved + after;
+        state = state.copyWith(
+          expression: newExpr,
+          cursorPosition: opRemoved.length,
+          clearError: true,
+        );
+        _updateLiveResult();
+        return;
+      }
+    }
+
+    // Standard single-char delete
+    final newBefore = before.substring(0, before.length - 1);
+    final newExpr = newBefore + after;
+    state = state.copyWith(
+      expression: newExpr,
+      cursorPosition: newBefore.length,
+      clearError: true,
+    );
     _updateLiveResult();
   }
 
@@ -304,6 +441,7 @@ class CalculatorNotifier extends StateNotifier<CalculatorState> {
     _triggerHaptic();
     state = state.copyWith(
       expression: '',
+      cursorPosition: 0,
       liveResult: '',
       clearError: true,
       isEvaluated: false,
@@ -339,6 +477,7 @@ class CalculatorNotifier extends StateNotifier<CalculatorState> {
   void setExpression(String expr) {
     state = state.copyWith(
       expression: expr,
+      cursorPosition: expr.length,
       isEvaluated: false,
       clearError: true,
     );
@@ -400,6 +539,12 @@ class CalculatorNotifier extends StateNotifier<CalculatorState> {
     if (res.isSuccess && res.formattedResult != null) {
       state = state.copyWith(
         liveResult: res.formattedResult!,
+        clearError: true,
+      );
+    } else {
+      // During active typing of incomplete expressions (e.g. "sin()"), suppress loud error and keep liveResult clean
+      state = state.copyWith(
+        liveResult: '',
         clearError: true,
       );
     }
