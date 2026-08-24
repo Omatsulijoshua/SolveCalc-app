@@ -20,13 +20,13 @@ class _TopBannerAdWidgetState extends ConsumerState<TopBannerAdWidget> {
     final premiumState = ref.watch(premiumProvider);
     AdManager.instance.updatePremiumStatus(premiumState.isPremium);
 
-    // Completely hidden with 0 vertical space for Lifetime Pro users or when emergency disabled
-    if (!AdManager.instance.shouldShowAds || _isTemporarilyDismissed) {
+    // CRITICAL: If the user is a paid Lifetime Pro user, completely eliminate the ad widget
+    // with 0px height, 0px margin, 0 layout shifts, and 0 network requests.
+    if (premiumState.isPremium || !AdManager.instance.shouldShowAds || _isTemporarilyDismissed) {
       return const SizedBox.shrink();
     }
 
     final theme = ref.watch(themeControllerProvider);
-    final activeProvider = AdManager.instance.resolveActiveProvider();
     final houseAd = AdManager.instance.houseAdProvider.getRandomHouseAd();
 
     return Container(
