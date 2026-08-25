@@ -66,247 +66,402 @@ class _PremiumPaywallScreenState extends ConsumerState<PremiumPaywallScreen> {
     final theme = ref.watch(themeControllerProvider);
     final premiumState = ref.watch(premiumProvider);
 
+    final isDark = theme.isDark;
+    final cardBg = isDark ? const Color(0xFF1E293B) : Colors.white;
+    final cardBorder = isDark ? const Color(0xFF38BDF8).withAlpha(140) : const Color(0xFF2563EB);
+    final textPrimary = isDark ? Colors.white : const Color(0xFF0F172A);
+    final textSecondary = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+    final checkmarkColor = isDark ? const Color(0xFF38BDF8) : const Color(0xFF0F172A);
+    final ctaButtonBg = isDark ? const Color(0xFF0284C7) : const Color(0xFF1D4ED8);
+
     return Scaffold(
       backgroundColor: theme.backgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.close, color: textPrimary),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         actions: [
           TextButton(
             onPressed: premiumState.isPurchasing ? null : _handleRestore,
-            child: const Text('Restore', style: TextStyle(fontWeight: FontWeight.bold)),
+            child: Text(
+              'Restore',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF1D4ED8),
+              ),
+            ),
           ),
         ],
       ),
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
           children: [
-            // Pro Crown Icon Badge
-            Center(
-              child: Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.amber.withAlpha(120),
-                      blurRadius: 24,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.workspace_premium,
-                  color: Colors.white,
-                  size: 52,
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            // Title & Subtitle
-            const Text(
-              'SolveCalc Pro Lifetime',
-              style: TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.w900,
-                color: Colors.white,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'One-time payment of ${AppConstants.proLifetimeUsdPrice}. Zero subscriptions. Forever yours on iOS & Android.',
-              style: TextStyle(
-                fontSize: 14,
-                color: theme.textSecondaryColor,
-                height: 1.4,
-              ),
-              textAlign: TextAlign.center,
-            ),
-
-            const SizedBox(height: 28),
-
-            // Feature Card List
+            // Main Google Pro-Style Offer Card
             Container(
-              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: theme.surfaceColor,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.amber.withAlpha(60)),
-              ),
-              child: Column(
-                children: [
-                  _proFeatureRow(
-                    Icons.block,
-                    '100% Ad-Free Forever',
-                    'Removes all app-open full screen and top banner ads completely.',
-                    theme,
-                  ),
-                  const Divider(height: 24),
-                  _proFeatureRow(
-                    Icons.camera_alt,
-                    'Unlimited Camera Math Snapping',
-                    'High-speed Groq Vision equation recognition from camera & photos.',
-                    theme,
-                  ),
-                  const Divider(height: 24),
-                  _proFeatureRow(
-                    Icons.palette,
-                    'All 9 Premium Themes Unlocked',
-                    'Pure White, Casio Scientific, Cyber Purple, Midnight, and more.',
-                    theme,
-                  ),
-                  const Divider(height: 24),
-                  _proFeatureRow(
-                    Icons.school,
-                    'Full Learn Mode & Step-by-Step AI',
-                    'In-depth explanations answering why each step is performed.',
-                    theme,
+                color: cardBg,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: cardBorder, width: 2),
+                boxShadow: [
+                  BoxShadow(
+                    color: (isDark ? const Color(0xFF38BDF8) : const Color(0xFF2563EB))
+                        .withAlpha(25),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
                   ),
                 ],
               ),
-            ),
-
-            const SizedBox(height: 28),
-
-            // Pricing Pill Box
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.amber.withAlpha(35),
-                    Colors.amber.withAlpha(15),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.amber.withAlpha(150), width: 1.5),
-              ),
-              child: Row(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.verified, color: Colors.amber, size: 28),
-                  const SizedBox(width: 14),
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                  // Top Badge: RECOMMENDED
+                  Text(
+                    'RECOMMENDED',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.1,
+                      color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF2563EB),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Header: SolveCalc Pro
+                  RichText(
+                    text: TextSpan(
                       children: [
-                        Text(
-                          'Lifetime License',
+                        TextSpan(
+                          text: 'SolveCalc ',
                           style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                            fontSize: 28,
+                            fontWeight: FontWeight.w900,
+                            color: textPrimary,
+                            letterSpacing: -0.5,
                           ),
                         ),
-                        Text(
-                          'Pay once, enjoy forever across all devices',
-                          style: TextStyle(fontSize: 12, color: Colors.white70),
+                        TextSpan(
+                          text: 'Pro',
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w900,
+                            color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF2563EB),
+                            letterSpacing: -0.5,
+                          ),
                         ),
                       ],
                     ),
                   ),
+                  const SizedBox(height: 4),
+
+                  // Tagline: 75% off lifetime offer
                   Text(
-                    AppConstants.proLifetimePrice,
-                    style: const TextStyle(
+                    '75% off lifetime access',
+                    style: TextStyle(
                       fontSize: 22,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.amber,
+                      fontWeight: FontWeight.w700,
+                      color: textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Pill / Chip: All 9 Themes + Camera AI
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? const Color(0xFF38BDF8).withAlpha(30)
+                          : const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: isDark ? Colors.white12 : const Color(0xFFE2E8F0),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.all_inclusive,
+                          size: 14,
+                          color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF475569),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Lifetime License • Zero Ads',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? Colors.white70 : const Color(0xFF475569),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Price Section: Strikethrough & Big Highlighted Price
+                  Text(
+                    'NGN 28,500',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      decoration: TextDecoration.lineThrough,
+                      color: textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
+                    children: [
+                      Text(
+                        'NGN 7,100',
+                        style: TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.w900,
+                          color: isDark ? const Color(0xFF10B981) : const Color(0xFF047857),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        '(\$9.99 USD one-time)',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'One-time payment • No subscriptions, forever yours',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Primary CTA Button
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: ctaButtonBg,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        elevation: 2,
+                      ),
+                      onPressed: premiumState.isPurchasing ? null : _handlePurchase,
+                      child: premiumState.isPurchasing
+                          ? const SizedBox(
+                              height: 22,
+                              width: 22,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2.5,
+                              ),
+                            )
+                          : const Text(
+                              'Get SolveCalc Pro',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                    ),
+                  ),
+                  const SizedBox(height: 28),
+
+                  // Section Title with Sparkle Icon
+                  Row(
+                    children: [
+                      _sparkleIcon(),
+                      const SizedBox(width: 10),
+                      Text(
+                        'SolveCalc Pro Features',
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.bold,
+                          color: textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 18),
+
+                  // Checklist Items
+                  _benefitCheckItem(
+                    'Deeper math research and exam prep',
+                    'Get expanded access to AI Solver and Learn Mode to break down complex equations with complete working & reasoning.',
+                    textPrimary,
+                    textSecondary,
+                    checkmarkColor,
+                  ),
+                  const SizedBox(height: 16),
+                  _benefitCheckItem(
+                    'Unlimited camera math snapping',
+                    'Scan handwritten notes, assignments, or textbook math problems with high-speed Groq Vision OCR.',
+                    textPrimary,
+                    textSecondary,
+                    checkmarkColor,
+                  ),
+                  const SizedBox(height: 16),
+                  _benefitCheckItem(
+                    'All 9 premium themes unlocked',
+                    'Access Casio Scientific, Pure White, Cyber Neon, OLED Black, Midnight Navy, Sunset Glow, and more.',
+                    textPrimary,
+                    textSecondary,
+                    checkmarkColor,
+                  ),
+                  const SizedBox(height: 16),
+                  _benefitCheckItem(
+                    'Faster code and math calculations',
+                    'High-precision trigonometric, algebraic, and calculus engine with auto-balanced parentheses and zero errors.',
+                    textPrimary,
+                    textSecondary,
+                    checkmarkColor,
+                  ),
+                  const SizedBox(height: 16),
+                  _benefitCheckItem(
+                    '100% offline calculation engine',
+                    'Perform all basic and advanced scientific calculations without requiring an internet connection.',
+                    textPrimary,
+                    textSecondary,
+                    checkmarkColor,
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Divider
+                  Divider(color: isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
+                  const SizedBox(height: 16),
+
+                  // INCLUDED Section
+                  Text(
+                    'INCLUDED',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.0,
+                      color: textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEF4444).withAlpha(30),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(Icons.block, color: Color(0xFFEF4444), size: 18),
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        '100% Ad-Free • Forever',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  _benefitCheckItem(
+                    'Zero interruptions',
+                    'All top banner ads and full-screen popup ads are permanently disabled.',
+                    textPrimary,
+                    textSecondary,
+                    checkmarkColor,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Included with SolveCalc Pro at no additional cost.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontStyle: FontStyle.italic,
+                      color: textSecondary,
                     ),
                   ),
                 ],
               ),
             ),
+            const SizedBox(height: 20),
 
-            const SizedBox(height: 24),
-
-            // Purchase Button
-            FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFFF59E0B),
-                padding: const EdgeInsets.symmetric(vertical: 18),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                elevation: 4,
-              ),
-              onPressed:
-                  premiumState.isPurchasing ? null : _handlePurchase,
-              child: premiumState.isPurchasing
-                  ? const SizedBox(
-                      height: 24,
-                      width: 24,
-                      child: CircularProgressIndicator(
-                        color: Colors.black,
-                        strokeWidth: 3,
-                      ),
-                    )
-                  : const Text(
-                      'Upgrade to Lifetime Pro (\$10 USD)',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.black,
-                      ),
-                    ),
-            ),
-
-            const SizedBox(height: 14),
-
-            // Terms & Privacy text
+            // Terms and restore footer
             Center(
               child: Text(
-                'Compatible with Apple In-App Purchase & Google Play Billing.\nOne-time payment of \$10 USD with no recurring fees.',
+                'Compatible with Apple In-App Purchase & Google Play Billing.\nOne-time payment with no recurring subscription fees.',
                 style: TextStyle(
                   fontSize: 11,
-                  color: theme.textSecondaryColor,
+                  color: textSecondary,
                   height: 1.4,
                 ),
                 textAlign: TextAlign.center,
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 16),
           ],
         ),
       ),
     );
   }
 
-  Widget _proFeatureRow(
-    IconData icon,
+  Widget _sparkleIcon() {
+    return Container(
+      width: 24,
+      height: 24,
+      decoration: const BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: LinearGradient(
+          colors: [Color(0xFF3B82F6), Color(0xFF8B5CF6), Color(0xFFEC4899)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: const Icon(Icons.auto_awesome, color: Colors.white, size: 14),
+    );
+  }
+
+  Widget _benefitCheckItem(
     String title,
     String description,
-    CalculatorThemeConfig theme,
+    Color textPrimary,
+    Color textSecondary,
+    Color checkmarkColor,
   ) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Colors.amber.withAlpha(30),
-            borderRadius: BorderRadius.circular(10),
+        Padding(
+          padding: const EdgeInsets.only(top: 2),
+          child: Icon(
+            Icons.check,
+            size: 18,
+            color: checkmarkColor,
           ),
-          child: Icon(icon, color: Colors.amber, size: 20),
         ),
-        const SizedBox(width: 14),
+        const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 title,
-                style: const TextStyle(
-                  fontSize: 15,
+                style: TextStyle(
+                  fontSize: 14,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: textPrimary,
                 ),
               ),
               const SizedBox(height: 2),
@@ -314,8 +469,8 @@ class _PremiumPaywallScreenState extends ConsumerState<PremiumPaywallScreen> {
                 description,
                 style: TextStyle(
                   fontSize: 12,
-                  color: theme.textSecondaryColor,
-                  height: 1.3,
+                  color: textSecondary,
+                  height: 1.35,
                 ),
               ),
             ],
