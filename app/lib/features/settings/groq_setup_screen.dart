@@ -5,6 +5,7 @@ import '../../core/theme/theme_controller.dart';
 import '../../core/theme/theme_presets.dart';
 import '../../data/services/storage_service.dart';
 import '../../domain/ai/groq_solver_service.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class GroqSetupScreen extends ConsumerStatefulWidget {
   const GroqSetupScreen({super.key});
@@ -381,17 +382,26 @@ class _GroqSetupScreenState extends ConsumerState<GroqSetupScreen> {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     ),
-                    icon: const Icon(Icons.copy, size: 16),
-                    label: const Text('Copy URL: console.groq.com/keys', style: TextStyle(fontSize: 12)),
-                    onPressed: () {
-                      Clipboard.setData(const ClipboardData(text: 'https://console.groq.com/keys'));
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Copied "https://console.groq.com/keys" to clipboard!'),
-                          duration: Duration(seconds: 2),
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
+                    icon: const Icon(Icons.open_in_new, size: 16),
+                    label: const Text('Configure AI', style: TextStyle(fontSize: 12)),
+                    onPressed: () async {
+                      final Uri url = Uri.parse('https://console.groq.com/keys');
+                      try {
+                        if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+                          throw 'Could not launch $url';
+                        }
+                      } catch (e) {
+                        Clipboard.setData(const ClipboardData(text: 'https://console.groq.com/keys'));
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Could not open browser. Copied URL to clipboard!'),
+                              duration: Duration(seconds: 2),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        }
+                      }
                     },
                   ),
                 ],
