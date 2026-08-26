@@ -17,164 +17,18 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
   final ImagePicker _picker = ImagePicker();
   bool _isScanning = false;
 
-  void _showGroqRequiredSheet(BuildContext context) {
-    final theme = ref.read(themeControllerProvider);
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: theme.surfaceColor,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.white24,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.amber.withAlpha(30),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.bolt, color: Colors.amber, size: 28),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Groq AI Setup Required',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'To snap & recognize questions with your camera',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: theme.textSecondaryColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 18),
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: theme.backgroundColor.withAlpha(150),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: Colors.white10),
-              ),
-              child: Column(
-                children: [
-                  _benefitRow(Icons.camera_alt, 'Instant Camera Math OCR with Groq Vision', theme),
-                  const SizedBox(height: 10),
-                  _benefitRow(Icons.auto_awesome, 'Step-by-Step AI solutions & Learn Mode', theme),
-                  const SizedBox(height: 10),
-                  _benefitRow(Icons.lock_open, '100% Free with your personal Groq key', theme),
-                ],
-              ),
-            ),
-            const SizedBox(height: 22),
-            FilledButton.icon(
-              style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF10B981),
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-              ),
-              icon: const Icon(Icons.bolt, color: Colors.white),
-              label: const Text(
-                'Set Up Free Groq AI Now',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              onPressed: () {
-                Navigator.of(ctx).pop();
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const GroqSetupScreen()),
-                );
-              },
-            ),
-            const SizedBox(height: 10),
-            TextButton(
-              style: TextButton.styleFrom(
-                foregroundColor: theme.textSecondaryColor,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-              ),
-              onPressed: () {
-                Navigator.of(ctx).pop();
-                _openManualEditor();
-              },
-              child: const Text('Or Type Equation Manually'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _benefitRow(IconData icon, String text, dynamic theme) {
-    return Row(
-      children: [
-        Icon(icon, size: 18, color: const Color(0xFF10B981)),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            text,
-            style: const TextStyle(fontSize: 13, color: Colors.white),
-          ),
-        ),
-      ],
-    );
-  }
-
   Future<void> _pickImage(ImageSource source) async {
-    final storage = ref.read(storageServiceProvider);
-    final hasGroqKey = storage.getGroqApiKey() != null && storage.getGroqApiKey()!.isNotEmpty;
-
-    // Restrict AI Snapping if Groq AI is not setup
-    if (!hasGroqKey) {
-      _showGroqRequiredSheet(context);
-      return;
-    }
-
     setState(() => _isScanning = true);
     try {
       final XFile? photo = await _picker.pickImage(
         source: source,
         maxWidth: 1600,
         maxHeight: 1600,
-        imageQuality: 85,
+        imageQuality: 88,
       );
 
       if (photo != null && mounted) {
-        // Run AI OCR recognition using Groq Vision
+        // Run AI OCR recognition using multi-stage MathOcrService
         final recognizedText = await ref
             .read(solverProvider.notifier)
             .processImageAndRecognize(photo.path);
@@ -193,7 +47,10 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not process image: ${e.toString()}')),
+          SnackBar(
+            content: Text('Camera error: ${e.toString()}'),
+            backgroundColor: Colors.redAccent,
+          ),
         );
       }
     } finally {
@@ -238,7 +95,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
               Icons.bolt,
               color: hasGroqKey ? const Color(0xFF10B981) : Colors.amber,
             ),
-            tooltip: hasGroqKey ? 'Groq AI Active' : 'Setup Groq AI',
+            tooltip: hasGroqKey ? 'Groq AI Active' : 'Setup Groq AI Key',
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const GroqSetupScreen()),
@@ -256,110 +113,49 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
               children: [
                 // Viewfinder Frame
                 Container(
-                  width: MediaQuery.of(context).size.width * 0.85,
+                  width: MediaQuery.of(context).size.width * 0.86,
                   height: MediaQuery.of(context).size.width * 0.58,
                   decoration: BoxDecoration(
                     color: Colors.white.withAlpha(12),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: hasGroqKey ? const Color(0xFF10B981) : Colors.amber.withAlpha(180),
-                      width: 2,
+                      color: hasGroqKey ? const Color(0xFF10B981) : const Color(0xFF38BDF8),
+                      width: 2.5,
                     ),
                   ),
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
-                      if (hasGroqKey) ...[
-                        // Scanner Aim Laser
-                        Container(
-                          height: 2,
-                          margin: const EdgeInsets.symmetric(horizontal: 20),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF10B981).withAlpha(200),
-                            boxShadow: const [
-                              BoxShadow(
-                                color: Color(0xFF10B981),
-                                blurRadius: 8,
-                                spreadRadius: 1,
-                              ),
-                            ],
-                          ),
+                      // Scanner Aim Laser
+                      Container(
+                        height: 2,
+                        margin: const EdgeInsets.symmetric(horizontal: 20),
+                        decoration: BoxDecoration(
+                          color: (hasGroqKey ? const Color(0xFF10B981) : const Color(0xFF38BDF8)).withAlpha(220),
+                          boxShadow: [
+                            BoxShadow(
+                              color: hasGroqKey ? const Color(0xFF10B981) : const Color(0xFF38BDF8),
+                              blurRadius: 8,
+                              spreadRadius: 1,
+                            ),
+                          ],
                         ),
-                        Text(
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withAlpha(140),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
                           'Align math equation within frame',
                           style: TextStyle(
-                            color: Colors.white.withAlpha(180),
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
+                            color: Colors.white.withAlpha(220),
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
-                      ] else ...[
-                        // Locked State inside Viewfinder
-                        Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  color: Colors.amber.withAlpha(30),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(Icons.lock, color: Colors.amber, size: 24),
-                              ),
-                              const SizedBox(height: 8),
-                              const Text(
-                                'AI Camera Snapping is Locked',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Connect your free Groq key to unlock',
-                                style: TextStyle(
-                                  color: Colors.white.withAlpha(180),
-                                  fontSize: 11,
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              InkWell(
-                                onTap: () {
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(builder: (_) => const GroqSetupScreen()),
-                                  );
-                                },
-                                borderRadius: BorderRadius.circular(20),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                                  decoration: BoxDecoration(
-                                    color: Colors.amber,
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: const Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(Icons.bolt, color: Colors.black, size: 14),
-                                      SizedBox(width: 4),
-                                      Text(
-                                        'Unlock with Groq AI',
-                                        style: TextStyle(
-                                          color: Colors.black,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+                      ),
                     ],
                   ),
                 ),
@@ -384,12 +180,15 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
                         children: [
                           Icon(Icons.bolt, color: Colors.amber, size: 16),
                           SizedBox(width: 6),
-                          Text(
-                            'Tap here to setup free Groq API key',
-                            style: TextStyle(
-                              color: Colors.amber,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
+                          Flexible(
+                            child: Text(
+                              'Tip: Tap to add a free Groq API key for 10x faster AI Vision',
+                              style: TextStyle(
+                                color: Colors.amber,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              textAlign: TextAlign.center,
                             ),
                           ),
                         ],
@@ -398,7 +197,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
                   ),
                 ] else ...[
                   const Text(
-                    '⚡ Powered by Groq Ultra-Fast AI (Llama 3.3 + Vision)',
+                    '⚡ Powered by Groq Ultra-Fast AI Vision',
                     style: TextStyle(
                       color: Color(0xFF10B981),
                       fontSize: 13,
@@ -423,7 +222,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
                     ),
                     const SizedBox(height: 20),
                     const Text(
-                      'AI is analyzing equation with Groq Vision...',
+                      'AI is recognizing mathematical equation...',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 15,
@@ -464,18 +263,18 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: hasGroqKey ? Colors.white : Colors.amber.withAlpha(200),
+                        color: hasGroqKey ? const Color(0xFF10B981) : const Color(0xFF38BDF8),
                         width: 4,
                       ),
                     ),
                     child: Container(
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: hasGroqKey ? const Color(0xFF10B981) : Colors.amber,
+                        color: hasGroqKey ? const Color(0xFF10B981) : const Color(0xFF38BDF8),
                       ),
-                      child: Icon(
-                        hasGroqKey ? Icons.camera_alt : Icons.lock,
-                        color: hasGroqKey ? Colors.white : Colors.black,
+                      child: const Icon(
+                        Icons.camera_alt,
+                        color: Colors.white,
                         size: 32,
                       ),
                     ),

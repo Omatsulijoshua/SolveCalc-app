@@ -29,9 +29,8 @@ class _QuestionConfirmationScreenState
   void initState() {
     super.initState();
     final solverState = ref.read(solverProvider);
-    _textController = TextEditingController(
-      text: widget.initialQuestion ?? solverState.recognizedQuestion,
-    );
+    final initial = widget.initialQuestion ?? solverState.recognizedQuestion;
+    _textController = TextEditingController(text: initial);
   }
 
   @override
@@ -58,13 +57,16 @@ class _QuestionConfirmationScreenState
     final question = _textController.text.trim();
     if (question.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a mathematical question.')),
+        const SnackBar(
+          content: Text('Please enter or scan a mathematical question first.'),
+          backgroundColor: Colors.amber,
+        ),
       );
       return;
     }
 
     ref.read(solverProvider.notifier).updateQuestion(question);
-    
+
     // Navigate to solution screen which will trigger solve()
     Navigator.of(context).push(
       MaterialPageRoute(
@@ -78,18 +80,19 @@ class _QuestionConfirmationScreenState
     final theme = ref.watch(themeControllerProvider);
     final storage = ref.watch(storageServiceProvider);
     final hasGroqKey = storage.getGroqApiKey() != null && storage.getGroqApiKey()!.isNotEmpty;
+    final hasDetectedText = _textController.text.trim().isNotEmpty;
 
     return Scaffold(
       backgroundColor: theme.backgroundColor,
       appBar: AppBar(
-        title: const Text('Confirm Question'),
+        title: const Text('Confirm Math Question'),
         actions: [
           IconButton(
             icon: Icon(
               Icons.bolt,
               color: hasGroqKey ? const Color(0xFF10B981) : Colors.amber,
             ),
-            tooltip: hasGroqKey ? 'Groq AI Active' : 'Setup Groq AI',
+            tooltip: hasGroqKey ? 'Groq AI Active' : 'Setup Groq AI Key',
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const GroqSetupScreen()),
@@ -106,26 +109,62 @@ class _QuestionConfirmationScreenState
             children: [
               // Image Preview Thumbnail if photo was taken
               if (widget.imagePath != null) ...[
-                Container(
-                  height: 120,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    color: theme.surfaceColor,
-                    image: DecorationImage(
-                      image: FileImage(File(widget.imagePath!)),
-                      fit: BoxFit.cover,
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: Container(
+                    height: 130,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: theme.surfaceColor,
+                      border: Border.all(color: Colors.white12),
+                    ),
+                    child: Image.file(
+                      File(widget.imagePath!),
+                      fit: BoxFit.contain,
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 14),
               ],
 
-              const Text(
-                'Recognized Math Question:',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              // Status Badge
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: hasDetectedText
+                      ? const Color(0xFF10B981).withAlpha(30)
+                      : Colors.amber.withAlpha(30),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: hasDetectedText
+                        ? const Color(0xFF10B981).withAlpha(120)
+                        : Colors.amber.withAlpha(120),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      hasDetectedText ? Icons.check_circle : Icons.info_outline,
+                      size: 16,
+                      color: hasDetectedText ? const Color(0xFF10B981) : Colors.amber,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        hasDetectedText
+                            ? 'AI recognized equation. You can edit if needed:'
+                            : 'Could not auto-detect text. Please type your equation below:',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: hasDetectedText ? const Color(0xFF10B981) : Colors.amber,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 10),
 
               // Editable Question TextField
               Container(
@@ -134,23 +173,25 @@ class _QuestionConfirmationScreenState
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: theme.primaryColor.withAlpha(80)),
                 ),
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(14),
                 child: TextField(
                   controller: _textController,
-                  maxLines: 4,
+                  maxLines: 3,
+                  autofocus: !hasDetectedText,
                   style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w500,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w600,
                     color: theme.textPrimaryColor,
                   ),
                   decoration: const InputDecoration(
                     border: InputBorder.none,
-                    hintText: 'e.g. 2x + 5 = 15 or x² + 5x + 6 = 0',
+                    hintText: 'e.g. 3x + 12 = 24 or sin(45) + cos(30)',
                   ),
+                  onChanged: (_) => setState(() {}),
                 ),
               ),
 
-              const SizedBox(height: 14),
+              const SizedBox(height: 12),
 
               // Quick Math Symbol Insertion Chips
               SingleChildScrollView(
@@ -171,6 +212,7 @@ class _QuestionConfirmationScreenState
                     _symbolChip(')'),
                     _symbolChip('sin('),
                     _symbolChip('cos('),
+                    _symbolChip('tan('),
                     _symbolChip('π'),
                   ],
                 ),
@@ -191,7 +233,7 @@ class _QuestionConfirmationScreenState
                         side: BorderSide(color: theme.primaryColor),
                       ),
                       onPressed: () => Navigator.of(context).pop(),
-                      child: const Text('Retake / Back'),
+                      child: const Text('Retake Photo'),
                     ),
                   ),
                   const SizedBox(width: 14),
@@ -230,7 +272,10 @@ class _QuestionConfirmationScreenState
         label: Text(symbol, style: const TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: theme.surfaceColor,
         side: BorderSide(color: theme.operatorButtonColor),
-        onPressed: () => _insertSymbol(symbol),
+        onPressed: () {
+          _insertSymbol(symbol);
+          setState(() {});
+        },
       ),
     );
   }

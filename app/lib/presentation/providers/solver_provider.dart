@@ -5,6 +5,7 @@ import '../../data/repositories/solution_history_repository.dart';
 import '../../data/services/storage_service.dart';
 import '../../domain/ai/ai_solver_service.dart';
 import '../../domain/ai/groq_solver_service.dart';
+import '../../domain/ai/math_ocr_service.dart';
 import '../../domain/solver/solution_models.dart';
 
 enum ExplanationMode {
@@ -105,27 +106,29 @@ class SolverNotifier extends StateNotifier<SolverState> {
   Future<String> processImageAndRecognize(String imagePath) async {
     state = state.copyWith(isOcrProcessing: true, scannedImagePath: imagePath);
     final groqKey = _storage.getGroqApiKey();
+    final geminiKey = _storage.getAiApiKey();
 
-    if (groqKey != null && groqKey.isNotEmpty) {
-      try {
-        final recognized = await GroqAIService.recognizeMathFromImage(imagePath, groqKey);
-        state = state.copyWith(
-          isOcrProcessing: false,
-          recognizedQuestion: recognized,
-          clearError: true,
-        );
-        return recognized;
-      } catch (_) {
-        // Fallback to manual entry placeholder if image OCR fails
-      }
+    try {
+      final recognized = await MathOcrService.recognizeMath(
+        imagePath: imagePath,
+        groqApiKey: groqKey,
+        geminiApiKey: geminiKey,
+      );
+
+      state = state.copyWith(
+        isOcrProcessing: false,
+        recognizedQuestion: recognized,
+        clearError: true,
+      );
+      return recognized;
+    } catch (e) {
+      state = state.copyWith(
+        isOcrProcessing: false,
+        recognizedQuestion: '',
+        errorMessage: 'Could not auto-read image. Please enter question manually.',
+      );
+      return '';
     }
-
-    state = state.copyWith(
-      isOcrProcessing: false,
-      recognizedQuestion: '2x + 5 = 15',
-      clearError: true,
-    );
-    return state.recognizedQuestion;
   }
 
   void updateQuestion(String editedQuestion) {
