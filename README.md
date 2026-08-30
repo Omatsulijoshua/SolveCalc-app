@@ -14,6 +14,9 @@
 
 ```
 solvecalc/
+├── apk/                              # Production Android Release Build
+│   └── app-release.apk               # Pre-compiled optimized production APK (51.6MB)
+│
 ├── app/                              # SolveCalc Flutter Mobile Application (iOS / Android)
 │   ├── lib/
 │   │   ├── core/                     # Math token constants, theme presets, haptics
@@ -62,8 +65,9 @@ solvecalc/
 * **Custom Lexer & Recursive-Descent Parser**: Evaluates nested parentheses, implicit multiplication ($2(3+4)$, $2\sin(30)$), unary negatives, factorial ($5! = 120$), exponentiation, and root extraction.
 * **Trigonometry & Calculus Modes**: Supports `DEG` (Degrees), `RAD` (Radians), and `GRAD` with high-precision trigonometric, hyperbolic ($\sinh$, $\cosh$), logarithmic ($\log_{10}$, $\ln$), and constants ($\pi$, $e$).
 
-### 📸 2. Camera Math Scanner & Groq Vision AI
+### 📸 2. Camera Math Scanner & Multi-Stage Math OCR
 * **Real-time Camera Crop & OCR**: Optical character recognition translating handwritten equations and textbook math into structured mathematical notation.
+* **Multi-Stage MathOcrService**: Features intelligent pre-processing and pipeline selection (replacing deprecated direct vision models) to provide extremely precise text/image formula parsing.
 * **Dual-Engine Solving**:
   1. **Deterministic Local Solver**: Linear algebra ($ax+b=c$), quadratic equations ($ax^2+bx+c=0$), and simultaneous systems.
   2. **Groq Cloud LLM Solver**: `llama-3.3-70b-versatile` delivering step-by-step proofs with pedagogical *"Why This Step"* explanations.
@@ -167,13 +171,19 @@ Supports 5 distinct administrative roles with instant context switching in the n
 ## 🚀 Getting Started
 
 ### Prerequisites
-* **Flutter SDK** $\ge 3.22.0$ & Dart $\ge 3.4.0$
+* **Flutter SDK** $\ge 3.12.0$ & Dart $\ge 3.11.0$ (Supports local environments running Dart 3.11.4+)
 * **Node.js** $\ge 18.17.0$ & **npm** $\ge 9.0.0$
 
 ---
 
 ### 📱 Running the Mobile App (`app/`)
 
+#### 📲 Pre-compiled Release Android Package (APK)
+If you just want to run/install the application on your Android device without compiling the source code, you can download the pre-built optimized production APK directly:
+* **Release Artifact File**: [apk/app-release.apk](file:///c:/Users/SirBill's/Desktop/SolveCalc-app-main/SolveCalc-app-main/apk/app-release.apk)
+* **Optimizations**: Built with release mode optimization, including resource/icon tree-shaking (51.6MB size).
+
+#### 🛠️ Building & Running from Source
 ```bash
 # 1. Navigate to the mobile directory
 cd app
